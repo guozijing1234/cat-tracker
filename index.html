@@ -1,0 +1,3234 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="貓咪紀錄">
+  <meta name="theme-color" content="#f3f4f8">
+  <title>櫻 & 樨 飲食紀錄器</title>
+  <link rel="manifest" href="./manifest.json">
+  <link rel="apple-touch-icon" href="./icon-192.png">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; background: #f3f4f8; }
+    #root { height: 100%; }
+    button { -webkit-user-select: none; user-select: none; }
+    .bottom-bar { padding-bottom: max(16px, env(safe-area-inset-bottom)) !important; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+
+// ─── Food Database ────────────────────────────────────────────────────────────
+const FOOD_DB = {
+  wet: [
+    { id:"W01", brand:"銀湯匙", name:"鮪魚 鰹魚 吻仔魚", meat:"鮪魚、鰹魚、吻仔魚", weight:70, origin:"泰國" },
+    { id:"W02", brand:"銀湯匙", name:"鮪魚 鰹魚 柴魚片", meat:"鮪魚、鰹魚、柴魚片", weight:70, origin:"泰國" },
+    { id:"W03", brand:"AIXIA 愛喜雅", name:"金缶1號 鮪魚", meat:"鮪魚", weight:70, origin:"日本" },
+    { id:"W04", brand:"Chérie 法麗", name:"全營養主食罐 鮪魚佐番茄 關節保健", meat:"鮪魚、番茄", weight:80, origin:"泰國" },
+    { id:"W05", brand:"Chérie 法麗", name:"全營養主食罐 雞肉佐小麥草", meat:"雞肉", weight:80, origin:"泰國" },
+    { id:"W06", brand:"GimCat ShinyCat", name:"Broth 鮮鮪魚佐鯷魚湯罐", meat:"鮪魚60%、鯷魚4%", weight:70, origin:"泰國" },
+    { id:"W07", brand:"Chérie 法麗", name:"乳酸菌餐包 鮪魚肉泥 泌尿道保健", meat:"鮪魚", weight:40, origin:"泰國" },
+    { id:"W08", brand:"Chérie 法麗", name:"乳酸菌餐包 雞肉肉泥 緩和舒壓", meat:"雞肉", weight:40, origin:"泰國" },
+    { id:"W09", brand:"アイシア", name:"水分補給3號 鮪魚片狀", meat:"鮪魚", weight:40, origin:"日本" },
+    { id:"W10", brand:"Solid Gold 素力高", name:"Holistic Delights 雞肉+鮪魚 椰奶濃湯", meat:"雞肉、鮪魚、椰奶", weight:85, origin:"泰國" },
+    { id:"W11", brand:"アイシア", name:"水分補給8號 雞肉泥狀", meat:"雞肉、鮪魚抽出物", weight:40, origin:"日本" },
+    { id:"W12", brand:"奔奔 eco sprint", name:"果肉泥主食餐包 極鮮烏魚", meat:"烏魚、雞油、紅龍果", weight:40, origin:"台灣" },
+    { id:"W13", brand:"go! Solutions Petcurean", name:"Booster 免疫保健 豐醬無穀鮪魚", meat:"鮪魚、鮪魚高湯", weight:71, origin:"泰國" },
+    { id:"W14", brand:"沙發馬鈴薯 Keptbaby", name:"吃軟飯 放蕩野雞", meat:"雞肉、雞骨泥、雞肝", weight:60, origin:"台灣" },
+    { id:"W15", brand:"沙發馬鈴薯 Keptbaby", name:"吃軟飯 懶潛鬼頭刀", meat:"鬼頭刀、雞骨泥", weight:60, origin:"台灣" },
+    { id:"W16", brand:"沙發馬鈴薯 Keptbaby", name:"吃軟飯 起秋活游鮭", meat:"鮭魚、雞骨泥、雞肝", weight:60, origin:"台灣" },
+    { id:"W17", brand:"Health iN 機能湯", name:"白身鮪魚＆花枝 維持健康", meat:"白身鮪魚、花枝", weight:80, origin:"泰國" },
+    { id:"W18", brand:"Health iN 機能湯", name:"白身鮪魚＆蝦肉 腸道健康", meat:"白身鮪魚、蝦肉", weight:80, origin:"泰國" },
+    { id:"W19", brand:"Health iN 機能湯", name:"白身鮪魚＆吻仔魚", meat:"白身鮪魚、吻仔魚", weight:80, origin:"泰國" },
+    { id:"W20", brand:"Health iN 機能湯", name:"白身鮪魚＆起司 維他命B群", meat:"白身鮪魚、起司", weight:80, origin:"泰國" },
+    { id:"W21", brand:"AIXIA 愛喜雅", name:"新金缶濃厚1號 鮪魚", meat:"鮪魚", weight:70, origin:"日本" },
+    { id:"W22", brand:"AIXIA 愛喜雅", name:"新金缶濃厚3號 鮪魚＋吻仔魚", meat:"鮪魚、吻仔魚", weight:70, origin:"日本" },
+    { id:"W23", brand:"AIXIA 愛喜雅", name:"金缶2號 鰹魚", meat:"鰹魚", weight:70, origin:"日本" },
+    { id:"W24", brand:"Chérie 法麗", name:"全營養主食罐 鮪魚佐紅蘿蔔", meat:"鮪魚、紅蘿蔔", weight:80, origin:"泰國" },
+    { id:"W25", brand:"Miki 特級機能", name:"白身鮪魚＋吻仔魚 in 地瓜湯凍", meat:"白身鮪魚、吻仔魚", weight:80, origin:"泰國" },
+    { id:"W26", brand:"Miki 特級機能", name:"白身鮪魚＋鮭魚 in 胡蘿蔔湯凍", meat:"白身鮪魚、鮭魚", weight:80, origin:"泰國" },
+    { id:"W27", brand:"Dr.Wish", name:"愛貓營養食 鮪魚＋雞肉＋維他命B群", meat:"鮪魚、雞肉", weight:85, origin:"泰國" },
+    { id:"W28", brand:"Dr.Wish", name:"愛貓營養食 鮪魚＋維他命A", meat:"鮪魚", weight:85, origin:"泰國" },
+    { id:"W29", brand:"Trilogy 奇境", name:"無穀貓罐 野生鯖魚燉雞湯", meat:"野生捕撈鯖魚", weight:65, origin:"泰國" },
+    { id:"W30", brand:"原點 Nature's Variety", name:"皇極鮮雞全貓主食罐", meat:"雞肉、雞肝、雞湯", weight:85, origin:"泰國" },
+    { id:"W31", brand:"餵我 湯鮮上", name:"純肉高湯罐 鮪魚＋蝦子", meat:"白身鮪魚、蝦子", weight:80, origin:"—" },
+    { id:"W32", brand:"Cat's Choice 挑嘴之最", name:"小貓罐 鮪魚＋蟹肉", meat:"白身鮪魚、蟹肉", weight:80, origin:"泰國" },
+    { id:"W33", brand:"Cat's Choice 挑嘴之最", name:"小貓罐 鮪魚", meat:"白身鮪魚", weight:80, origin:"泰國" },
+    { id:"W34", brand:"N&D Prime Farmina", name:"天然頂級無穀主食貓罐 雞肉石榴 #3", meat:"菲力雞排45%", weight:70, origin:"塞爾維亞" },
+    { id:"W35", brand:"GimCat ShinyCat", name:"Jelly 鮮嫩雞胸肉佐蟹肉", meat:"雞胸肉50%、蟹肉4%", weight:70, origin:"—" },
+    { id:"W36", brand:"Absolute Holistic", name:"Raw Stew 野生鮪魚佐魚子醬", meat:"白身鮪魚、鴨心、魚卵", weight:80, origin:"美國" },
+    { id:"W37", brand:"Royal Canin 皇家", name:"感官饗宴 泌尿健康 STW", meat:"肉及其相關產品", weight:85, origin:"奧地利" },
+    { id:"W38", brand:"たまの伝説 小玉", name:"No.42 鮮味高湯 鮪魚扇貝風味", meat:"柴魚高湯、鮪魚、扇貝萃取物、水解蛋白、膳食纖維", weight:40, origin:"日本" },
+    { id:"W39", brand:"たまの伝説 小玉", name:"No.40 鮮味高湯 鮪魚", meat:"柴魚高湯、鮪魚、水解蛋白、膳食纖維", weight:40, origin:"日本" },
+    { id:"W40", brand:"RONRON", name:"4號 鮪魚+鮭魚+酪梨 維持抵抗力主食餐包", meat:"鮪魚、鮭魚、酪梨、海帶芽、維生素、礦物質、鮭魚油、柴魚粉、黃原膠、乾酵母粉、大豆油、牛磺酸、氯化膽鹼", weight:75, origin:"泰國" },
+    { id:"W41", brand:"SEEDS Miki", name:"雞肝湯凍 白身鮪魚＋鴨肉", meat:"雞肝湯、白身鮪魚、鴨肉、膠凍、葡萄糖胺", weight:undefined, origin:"台灣" },
+    { id:"W42", brand:"SEEDS Miki", name:"南瓜湯凍 鮮嫩軟雞絲＋白身鮪魚", meat:"南瓜湯、雞肉、白身鮪魚、膠凍、牛磺酸", weight:undefined, origin:"台灣" },
+    { id:"W43", brand:"GimCat ShinyCat Broth", name:"竣寶鮮鮪魚佐白鮭魚魚湯罐", meat:"鮪魚60%、魚湯32.9%、白鮭魚4%、米", weight:70, origin:"—" },
+  ],
+  dry: [
+    { id:"D01", brand:"Petcurean go!", name:"Carnivore 無穀淡水鱒魚+鮭魚", meat:"去骨鱒魚、鮭魚粉", origin:"加拿大" },
+    { id:"D02", brand:"森仕", name:"成貓泌尿保健無穀鮭魚鮪魚", meat:"新鮮鮭魚20%、新鮮鮪魚20%", origin:"西班牙" },
+    { id:"D03", brand:"Petcurean go!", name:"Skin+Coat Care 皮毛保健雞肉蔬果", meat:"雞肉粉、去骨雞肉", origin:"加拿大" },
+    { id:"D04", brand:"Trilogy 奇境", name:"Essentials 無穀全齡貓 澳洲鮭魚", meat:"鮭魚肉、鮭魚粉", origin:"澳洲" },
+    { id:"D05", brand:"Farmina 法米納 N&D", name:"天然頂級無穀 室內貓 雞肉石榴 GC6", meat:"去骨雞肉30%", origin:"義大利" },
+    { id:"D06", brand:"Farmina 法米納 N&D", name:"天然藜麥無穀機能 鵪鶉椰子 QC3", meat:"鵪鶉肉20%", origin:"義大利" },
+    { id:"D07", brand:"Royal Canin 皇家", name:"泌尿道保健配方 UC33", meat:"脫水禽肉蛋白", origin:"韓國" },
+    { id:"D08", brand:"Royal Canin 皇家", name:"挑食成貓糧 E35", meat:"脫水家禽蛋白", origin:"韓國" },
+    { id:"D09", brand:"Orijen 歐睿健", name:"Six Fish 六種鮮魚 全齡無穀", meat:"沙丁魚28%、鱈魚7%", origin:"加拿大" },
+    { id:"D10", brand:"Orijen 歐睿健", name:"鮮雞愛貓 全齡無穀鮮肉", meat:"新鮮雞肉20%", origin:"加拿大" },
+    { id:"D11", brand:"Royal Canin 皇家", name:"O30 潔牙保健成貓專用乾糧", meat:"脫水禽肉蛋白、米、玉米、動物脂肪、小麥麩質、蔬菜纖維、水解家禽蛋白、小麥、小麥麵粉、玉米粉、玉米麩質、礦物質、甜菜漿、魚油、大豆油、果寡糖、洋車前子殼及籽", origin:"—" },
+  ],
+  supplement: [
+    { id:"S01", brand:"骨力勁", name:"Silver Advanced 骨關節保健＋肌力保健", dosage:"1錠/天", note:"膠原蛋白、葡萄糖胺、鯊魚軟骨素" },
+    { id:"S02", brand:"Antinol 安適得", name:"Rapid 酷版", dosage:"1顆/天", note:"EAB-277® 50mg 綠唇貝PCSO-524®" },
+    { id:"S03", brand:"嬌寵醫生", name:"極精萃頂級專利魚油S（酪蛋白舒壓配方）", dosage:"1顆/天", note:"純魚油 Omega-3 95%up" },
+    { id:"S04", brand:"Zylkene 健樂靜", name:"犬貓鎮靜愛護靈 75", dosage:"1顆/天", note:"Alpha-Casozepine 255mg" },
+  ],
+  dewormer: [
+    { id:"P01", brand:"Revolution 寵愛", name:"Selamectin 6% 滴劑", type:"體外驅蟲" },
+    { id:"P02", brand:"Elanco 多重奏貓", name:"48mg 錠劑", type:"體外驅蟲" },
+    { id:"P03", brand:"Elanco 倍脈心全效", name:"Milbemax 貓用膜衣錠", type:"體內驅蟲" },
+  ],
+  snack: [
+    { id:"T01", brand:"5km stick", name:"長尾鱈魚（淺綠）強骨力", meat:"雞胸肉、綠唇貽貝、哈密瓜、葡萄糖胺", weight:18 },
+    { id:"T02", brand:"5km stick", name:"烏骨雞（黑色）補元氣", meat:"烏骨雞、雞胸肉、黑藜麥、褐藻醣膠", weight:18 },
+    { id:"T03", brand:"5km stick", name:"雞胸肉（黃色）免疫力", meat:"雞胸肉、甜南瓜、薑黃、鳳梨", weight:18 },
+    { id:"T04", brand:"5km stick", name:"雞胸肉（紫色）抗氧化", meat:"雞胸肉、野櫻莓、紫薯、紫甘藍、巴西紫莓", weight:18 },
+    { id:"T05", brand:"5km stick", name:"火雞胸肉（白色）助消化", meat:"火雞胸肉、梨子、花椰菜、香蕉、奶酪", weight:18 },
+    { id:"T06", brand:"5km stick", name:"雞胸肉（綠色）強骨力", meat:"雞胸肉、綠貽貝、葡萄糖胺、綠藻、軟骨素", weight:18 },
+    { id:"T07", brand:"5km stick", name:"鮭魚（紅色）心血管", meat:"鮭魚、草莓、蔓越莓、胡蘿蔔、甜菜", weight:18 },
+    { id:"T08", brand:"5km stick", name:"鱈魚（淺黃色）免疫力", meat:"鱈魚（挪威）、干明太魚、甜南瓜、薑黃", weight:18 },
+    { id:"T09", brand:"泥好！Pet Tomodachi", name:"南助褐 心血管保健", meat:"烏骨雞、雞胸肉、南瓜", weight:18 },
+    { id:"T10", brand:"泥好！Pet Tomodachi", name:"大力水手 關節保健", meat:"鮪魚、花椰菜、菠菜", weight:18 },
+    { id:"T11", brand:"泥好！Pet Tomodachi", name:"布藍泥 護眼保健", meat:"雞胸肉、藍莓", weight:18 },
+    { id:"T12", brand:"泥好！Pet Tomodachi", name:"陸小蔓 泌尿保健", meat:"雞胸肉、蔓越莓", weight:18 },
+    { id:"T13", brand:"泥好！Pet Tomodachi", name:"鮭山島 腸胃健康", meat:"鮭魚、山藥", weight:18 },
+    { id:"T14", brand:"泥好！Pet Tomodachi", name:"鳳菲菜 腸道健康", meat:"鮪魚、吻仔魚、南瓜", weight:18 },
+    { id:"T15", brand:"銀のスプーン 銀湯匙", name:"クッキーサンド 三明治脆餅 鰹魚口味", meat:"麵粉、肉類（雞肉萃取物、雞肉）、油脂類、酵母萃取物、魚類（魚類萃取物、鮪魚萃取物）、鰹魚萃取物、啤酒酵母、醣類、調味料、抗氧化劑", weight:24 },
+    { id:"T16", brand:"銀のスプーン 銀湯匙", name:"クッキーサンド 三明治脆餅 干貝口味", meat:"麵粉、肉類（雞肉萃取物、雞肉）、油脂類、酵母萃取物、海鮮類（鮪魚萃取物、干貝萃取物）、鮪魚萃取物、啤酒酵母、醣類、調味料、抗氧化劑", weight:24 },
+    { id:"T17", brand:"Greenies 健綠", name:"貓咪潔牙餅 開胃鮮鮭口味", meat:"雞肉粉、小麥粉、釀酒米、玉米麩質、家禽脂肪（與維生素E混合）、燕麥纖維、鮭魚粉、亞麻籽粉、氯化鉀、碳酸鉀、氯化膽鹼、檸檬酸、果汁色素、牛磺酸、DL-胺基酸、綜合維生素E、硫酸亞鐵、薑黃色素、硫酸鋅、於鹼酸補充物、氧化鋅、硫酸銅", weight:undefined },
+    { id:"T18", brand:"GimCat 德國竣寶", name:"潔牙餅 鮪魚＋櫛瓜 43-0065", meat:"蔬菜（櫛瓜1%）、魚肉和魚肉衍生物（鮪魚30%）、油脂、植物蛋白提取物、酵母、礦物質", weight:50 },
+    { id:"T19", brand:"GimCat 德國竣寶", name:"潔牙餅 鮭魚＋菠菜", meat:"蔬菜（菠菜1%）、魚肉和魚肉衍生物（鮭魚30%）、油脂、植物蛋白提取物、酵母、礦物質", weight:50 },
+  ],
+};
+
+const todayStr = () => new Date().toISOString().slice(0,10);
+const calcAge = (bday) => {
+  if (!bday) return null;
+  const b = new Date(bday), now = new Date();
+  let y = now.getFullYear() - b.getFullYear();
+  let m = now.getMonth() - b.getMonth();
+  if (m < 0) { y--; m += 12; }
+  return `${y}歲${m}個月`;
+};
+const emptyDaily = () => ({
+  weight:"",
+  activity:0, reactivity:0, emotion:0,
+  wets:[], drys:[],
+  supplements:[], snacks:[], dewormers:[],
+  meds:[],
+  playSession:{ played:false, duration:"", toys:[], note:"" },
+  outing:{ wentOut:false, duration:"", destination:"", note:"" },
+  training:[],
+  issues:[], issueCounts:{}, issueNote:"", issueLinks:[],
+  breathRate:"", toiletCryTiming:[],
+  vomitDetail:{ content:[], color:[], form:"" },
+  vetVisits:[], note:"",
+});
+const emptyMed = () => ({ name:"", dose:"", unit:"", route:"", time:"", given:false, note:"" });
+const emptyVet = () => ({ clinic:"", vet:"", reason:"", diagnosis:"", treatment:"", meds:"", followUp:"", cost:"", note:"" });
+const emptyWet = () => ({ food:"", ingredients:"", weight:"", origin:"", texture:"", eaten:"", attitude:"", note:"" });
+const emptyDry = () => ({ food:"", ingredients:"", origin:"" });
+
+const BEHAVIOR_DIMS = [
+  {
+    key:"activity", label:"活動量",
+    icon:"🐾", color:"#f59e0b",
+    desc:"身體活動程度與移動頻率",
+    levels:[
+      { n:1, label:"幾乎不動", sub:"長時間睡眠" },
+      { n:2, label:"低活動",   sub:"偶爾移動" },
+      { n:3, label:"中等",     sub:"正常走動" },
+      { n:4, label:"高活動",   sub:"跑跳、玩耍" },
+      { n:5, label:"過高",     sub:"暴衝、停不下來" },
+    ]
+  },
+  {
+    key:"emotion", label:"情緒狀態",
+    icon:"🩶", color:"#ec4899",
+    desc:"情緒傾向與壓力程度",
+    levels:[
+      { n:1, label:"放鬆", sub:"慢眨眼、翻肚" },
+      { n:2, label:"穩定", sub:"安心、有互動" },
+      { n:3, label:"緊張", sub:"警戒、僵硬" },
+      { n:4, label:"壓力", sub:"躲藏、哈氣、攻擊" },
+    ]
+  },
+];
+const TEXTURES = [
+  { v:"肉塊", icon:"🥩" }, { v:"泥狀", icon:"🫙" }, { v:"果凍", icon:"✨" },
+  { v:"肉絲／肉條", icon:"🍖" }, { v:"慕斯", icon:"☁️" },
+];
+const ISSUES = [
+  { g:"飲食", icon:"🍽", items:[{v:"🤮 嘔吐",countable:true},{v:"💩 腹瀉"},{v:"🚫 拒食"},{v:"🌊 喝水量異常"}] },
+  { g:"排泄", icon:"🚽", items:[{v:"🚽 排便異常"},{v:"💧 排尿異常"},{v:"😿 如廁困難"},{v:"🔔 上廁所時會叫",toiletCry:true}] },
+  { g:"行為", icon:"😾", items:[{v:"😾 過度舔毛"},{v:"🙈 躲避"},{v:"😤 異常攻擊性"},{v:"😿 持續嚎叫",countable:true},{v:"🌀 異常轉圈"}] },
+  { g:"身體", icon:"🩺", items:[{v:"😮‍💨 呼吸急促",breathable:true},{v:"👁️ 眼睛分泌物"},{v:"👃 鼻水打噴嚏"},{v:"🦷 流口水過多"}] },
+];
+const ALL_ISSUES = ISSUES.flatMap(g => g.items.map(i => i.v));
+
+const TRAINING_ITEMS = [
+  { id:"carrier",  label:"外出籠",   icon:"🧳" },
+  { id:"syringe",  label:"餵藥器",   icon:"💉" },
+  { id:"capsule",  label:"手抓膠囊", icon:"💊" },
+  { id:"walking",  label:"走路引導", icon:"🐾" },
+  { id:"nail",     label:"剪指甲",   icon:"✂️" },
+  { id:"teeth",    label:"刷牙",     icon:"🦷" },
+];
+const TRAINING_STATUS = [
+  { v:"初次嘗試", color:"#8b5cf6", bg:"#f5f3ff" },
+  { v:"抗拒",     color:"#ef4444", bg:"#fef2f2" },
+  { v:"勉強接受", color:"#f97316", bg:"#fff7ed" },
+  { v:"配合",     color:"#3b82f6", bg:"#eff6ff" },
+  { v:"很棒",     color:"#22c55e", bg:"#f0fdf4" },
+];
+
+const VOMIT_CONTENT = ["原型食物","未消化食物","泡沫","毛球","異物","血"];
+const VOMIT_COLOR   = ["白色","透明","黃色","綠色","棕色","毛球混合","紅色","黑色"];
+const VOMIT_FORM    = ["嘔吐","逆流（沒有腹部收縮）"];
+
+const CATS = [
+  { id:"sakura", label:"櫻", color:"#CA8182", colorLight:"#fdf0f0", colorMid:"#e0a8a9", grad:"linear-gradient(135deg,#e8b4b5,#CA8182)", profileGrad:"linear-gradient(135deg,#4a4a4a,#1a1a1a)" },
+  { id:"xi",     label:"樨", color:"#d4845a", colorLight:"#fdf4ee", colorMid:"#F1C4A5", grad:"linear-gradient(135deg,#F1C4A5,#d4845a)", profileGrad:"linear-gradient(135deg,#9a9a9a,#4a4a4a)" },
+];
+
+// SVG cat icons — sakura: pink bow cat, xi: orange tabby cat
+function CatIcon({ catId, size = 32, color }) {
+  if (catId === "sakura") {
+    // Tortoiseshell cat — different patch layout from xi (more orange dominant, black on right)
+    return (
+      <svg width={size} height={size} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+        {/* ears — sakura: left=orange, right=dark */}
+        <path d="M12 26 L18 10 L26 22Z" fill="#c0602a" />
+        <path d="M52 26 L46 10 L38 22Z" fill="#2a1a0e" />
+        <path d="M14.5 24.5 L18.5 13 L24 21.5Z" fill="#f5c8a8" />
+        <path d="M49.5 24.5 L45.5 13 L40 21.5Z" fill="#f5c8a8" />
+        {/* head base — warm golden */}
+        <ellipse cx="32" cy="34" rx="20" ry="18" fill="#d4924a" />
+        {/* tortoiseshell patches — layout mirrored from xi */}
+        {/* black patch — right side */}
+        <path d="M38 22 Q44 20 50 26 Q50 34 44 38 Q38 34 38 28Z" fill="#2a1a0e" />
+        {/* dark brown patch — top center */}
+        <path d="M26 22 Q32 17 38 22 Q36 28 32 27 Q28 28 26 22Z" fill="#7a3a18" />
+        {/* orange patch — left forehead + left cheek */}
+        <path d="M14 24 Q18 20 26 22 Q26 30 22 36 Q15 33 14 24Z" fill="#c0602a" />
+        {/* small black spot — lower right */}
+        <path d="M40 36 Q46 33 50 40 Q46 45 40 43 Q37 40 40 36Z" fill="#2a1a0e" />
+        {/* small orange spot — lower left */}
+        <path d="M16 37 Q20 34 25 38 Q23 44 17 43 Q14 40 16 37Z" fill="#c0602a" />
+        {/* cream face center */}
+        <ellipse cx="32" cy="37" rx="13" ry="11" fill="#fdf0e0" />
+        {/* muzzle */}
+        <ellipse cx="32" cy="39" rx="8" ry="6" fill="#fdf6ee" />
+        {/* eyes — amber gold */}
+        <ellipse cx="25" cy="31" rx="3.5" ry="4" fill="#1a1008" />
+        <ellipse cx="39" cy="31" rx="3.5" ry="4" fill="#1a1008" />
+        <ellipse cx="25" cy="31" rx="3.5" ry="4" fill="none" stroke="#d4920a" strokeWidth="1.2" />
+        <ellipse cx="39" cy="31" rx="3.5" ry="4" fill="none" stroke="#d4920a" strokeWidth="1.2" />
+        <circle cx="26.2" cy="29.8" r="1.2" fill="white" />
+        <circle cx="40.2" cy="29.8" r="1.2" fill="white" />
+        {/* nose */}
+        <ellipse cx="32" cy="37.5" rx="2" ry="1.4" fill="#e89080" opacity="0.9"/>
+        {/* mouth */}
+        <path d="M29.5 39.5 Q32 42.5 34.5 39.5" stroke="#a06050" strokeWidth="1.4" fill="none" strokeLinecap="round"/>
+        {/* whiskers */}
+        <line x1="9"  y1="37" x2="22" y2="38"   stroke="#888" strokeWidth="1.1" strokeLinecap="round" opacity="0.55"/>
+        <line x1="9"  y1="40" x2="22" y2="40"   stroke="#888" strokeWidth="1.1" strokeLinecap="round" opacity="0.55"/>
+        <line x1="55" y1="37" x2="42" y2="38"   stroke="#888" strokeWidth="1.1" strokeLinecap="round" opacity="0.55"/>
+        <line x1="55" y1="40" x2="42" y2="40"   stroke="#888" strokeWidth="1.1" strokeLinecap="round" opacity="0.55"/>
+      </svg>
+    );
+  }
+  // Tortoiseshell cat — black, orange, brown patches
+  return (
+    <svg width={size} height={size} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+      {/* ears base */}
+      <path d="M12 26 L18 10 L26 22Z" fill="#2a1a0e" />
+      <path d="M52 26 L46 10 L38 22Z" fill="#c0672a" />
+      {/* ear inner */}
+      <path d="M14 25 L18.5 13 L24.5 22Z" fill="#f5c8a8" />
+      <path d="M50 25 L45.5 13 L39.5 22Z" fill="#f5c8a8" />
+      {/* head base — warm cream */}
+      <ellipse cx="32" cy="34" rx="20" ry="18" fill="#e8c89a" />
+      {/* tortoiseshell patches */}
+      {/* dark black patch — left forehead + left side */}
+      <path d="M14 24 Q18 20 26 22 Q24 30 20 36 Q14 32 14 24Z" fill="#2a1a0e" />
+      {/* orange patch — right forehead */}
+      <path d="M38 22 Q44 20 50 26 Q48 32 42 34 Q36 28 38 22Z" fill="#d4682a" />
+      {/* brown patch — top center */}
+      <path d="M26 22 Q32 18 38 22 Q36 28 32 30 Q28 28 26 22Z" fill="#7a3a18" />
+      {/* small orange spot — lower right cheek */}
+      <path d="M40 36 Q46 34 50 40 Q46 44 40 42 Q38 40 40 36Z" fill="#d4682a" />
+      {/* small black spot — lower left */}
+      <path d="M16 36 Q20 34 24 38 Q22 44 16 42 Q14 40 16 36Z" fill="#2a1a0e" />
+      {/* cream face center */}
+      <ellipse cx="32" cy="37" rx="13" ry="11" fill="#fdf0e0" />
+      {/* muzzle */}
+      <ellipse cx="32" cy="39" rx="8" ry="6" fill="#fdf6ee" />
+      {/* eyes — amber/gold typical of torties */}
+      <ellipse cx="25" cy="31" rx="3.5" ry="4" fill="#1a1008" />
+      <ellipse cx="39" cy="31" rx="3.5" ry="4" fill="#1a1008" />
+      {/* amber iris ring */}
+      <ellipse cx="25" cy="31" rx="3.5" ry="4" fill="none" stroke="#c8820a" strokeWidth="1.2" />
+      <ellipse cx="39" cy="31" rx="3.5" ry="4" fill="none" stroke="#c8820a" strokeWidth="1.2" />
+      <circle cx="26.2" cy="29.8" r="1.2" fill="white" />
+      <circle cx="40.2" cy="29.8" r="1.2" fill="white" />
+      {/* nose — pinkish */}
+      <ellipse cx="32" cy="37.5" rx="2" ry="1.4" fill="#e8908080" />
+      {/* mouth */}
+      <path d="M29.5 39.5 Q32 42.5 34.5 39.5" stroke="#a06050" strokeWidth="1.4" fill="none" strokeLinecap="round"/>
+      {/* whiskers */}
+      <line x1="9"  y1="37" x2="22" y2="38" stroke="#888" strokeWidth="1.1" strokeLinecap="round" opacity="0.55"/>
+      <line x1="9"  y1="40" x2="22" y2="40" stroke="#888" strokeWidth="1.1" strokeLinecap="round" opacity="0.55"/>
+      <line x1="55" y1="37" x2="42" y2="38" stroke="#888" strokeWidth="1.1" strokeLinecap="round" opacity="0.55"/>
+      <line x1="55" y1="40" x2="42" y2="40" stroke="#888" strokeWidth="1.1" strokeLinecap="round" opacity="0.55"/>
+    </svg>
+  );
+}
+
+const getStorage = async (key) => {
+  try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; }
+  catch { return null; }
+};
+const setStorage = async (key, val) => {
+  try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
+};
+const loadAllRecords = async (catId) => {
+  const keys = await (async()=>{ const _p=`daily:${catId}:`; const _k=[]; for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k&&k.startsWith(_p))_k.push(k); } return {keys:_k}; })();
+  const loaded = [];
+  for (const k of (keys?.keys||[])) {
+    const v = await getStorage(k);
+    if (v) loaded.push({ date: k.replace(`daily:${catId}:`,""), ...v });
+  }
+  return loaded.sort((a,b)=>a.date.localeCompare(b.date));
+};
+
+// ─── CSS ──────────────────────────────────────────────────────────────────────
+const css = `
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Noto+Sans+TC:wght@400;500;700&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #f3f4f8;
+  --bg2: #f8f9fb;
+  --surface: rgba(255,255,255,0.93);
+  --surface-solid: #ffffff;
+  --border: rgba(100,160,220,0.2);
+  --shadow: 0 8px 32px rgba(50,120,200,0.10), 0 2px 8px rgba(50,120,200,0.06);
+  --shadow-sm: 0 4px 16px rgba(50,120,200,0.08);
+  --text: #0f2d52;
+  --text2: #3a6fa8;
+  --text3: #80aad4;
+  --accent: #2980d4;
+  --accent2: #60aae8;
+  --radius: 20px;
+  --radius-sm: 14px;
+  --radius-xs: 10px;
+  --font: 'Nunito', 'Noto Sans TC', sans-serif;
+}
+
+.app {
+  max-width: 480px;
+  margin: 0 auto;
+  font-family: var(--font);
+  background: var(--bg);
+  min-height: 100vh;
+  padding-bottom: 96px;
+  position: relative;
+}
+
+/* Decorative background blobs */
+.app::before {
+  content: '';
+  position: fixed;
+  top: -80px; left: -60px;
+  width: 300px; height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(202,129,130,0.2) 0%, transparent 70%);
+  pointer-events: none; z-index: 0;
+}
+.app::after {
+  content: '';
+  position: fixed;
+  bottom: 100px; right: -80px;
+  width: 260px; height: 260px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(241,196,165,0.3) 0%, transparent 70%);
+  pointer-events: none; z-index: 0;
+}
+
+/* ── Cat Tabs ── */
+.cat-tabs {
+  display: flex;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: #f3f4f8;
+  padding: 12px 14px 10px;
+  gap: 10px;
+}
+.cat-tab {
+  flex: 1;
+  border: none;
+  cursor: pointer;
+  border-radius: 18px;
+  padding: 10px 12px;
+  font-family: var(--font);
+  transition: all .25s cubic-bezier(.34,1.56,.64,1);
+  background: white;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+  color: var(--text2);
+}
+.cat-tab.active {
+  box-shadow: 0 6px 20px rgba(0,0,0,0.13);
+  transform: translateY(-2px);
+}
+.ct-inner { display:flex; align-items:center; justify-content:center; gap:10px; }
+.ct-emoji { line-height:1; display:flex; align-items:center; flex-shrink:0; }
+.ct-text { text-align: left; }
+.ct-name { font-size: 16px; font-weight: 800; display:block; line-height:1.2; }
+.ct-age { font-size: 11px; font-weight: 600; opacity:.65; display:block; margin-top:2px; }
+
+/* ── View toggle ── */
+.view-tabs {
+  display: flex;
+  gap: 6px;
+  padding: 14px 16px 6px;
+  position: relative; z-index:1;
+}
+.view-tab {
+  flex: 1;
+  padding: 10px;
+  border-radius: 50px;
+  border: 2px solid transparent;
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .2s;
+  background: rgba(255,255,255,0.6);
+  color: var(--text2);
+}
+.view-tab.active {
+  background: var(--accent);
+  color: white;
+  box-shadow: 0 4px 12px rgba(41,128,212,0.35);
+}
+
+/* ── Page ── */
+.page { padding: 0 14px; position: relative; z-index:1; }
+.page-analytics { padding: 0 14px; position: relative; z-index:1; }
+
+/* ── Profile card ── */
+.profile-card {
+  position: relative; z-index: 1;
+  overflow: hidden;
+  margin: 0 14px 4px;
+}
+.profile-banner {
+  position: relative;
+  padding: 10px 4px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  min-height: unset;
+  justify-content: flex-start;
+}
+.profile-banner::before { display: none; }
+.profile-banner::after { display: none; }
+.profile-cat-icon {
+  width: 46px; height: 46px;
+  border-radius: 50%;
+  background: transparent;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.profile-info {
+  display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0;
+}
+.profile-name-row {
+  display: flex; align-items: center; gap: 6px;
+}
+.cat-name-inp {
+  border: none; background: transparent;
+  font-size: 19px; font-weight: 900;
+  font-family: var(--font);
+  padding: 0; color: var(--text);
+  width: auto; min-width: 50px; max-width: 160px;
+}
+.cat-name-inp:focus { outline: none; }
+.cat-name-inp::placeholder { color: var(--text3); }
+.profile-meta {
+  display: flex; align-items: center;
+  gap: 6px; flex-wrap: wrap;
+}
+.bday-inp {
+  font-size: 11px; font-weight: 700;
+  border: 1.5px solid var(--border);
+  border-radius: 50px; padding: 3px 10px;
+  background: white;
+  color: var(--text2); font-family: var(--font);
+}
+.bday-inp:focus { outline: none; border-color: var(--accent); }
+.bday-inp::-webkit-calendar-picker-indicator { cursor: pointer; }
+.age-badge {
+  font-size: 11px; font-weight: 800;
+  padding: 3px 10px; border-radius: 50px;
+  white-space: nowrap;
+}
+
+/* ── Date nav ── */
+.date-nav {
+  display: flex; align-items:center; gap:8px;
+  padding: 14px 0 8px;
+}
+.dnav-btn {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  border: 2px solid rgba(41,128,212,0.2);
+  background: var(--surface);
+  font-size: 18px; cursor: pointer;
+  display: flex; align-items:center; justify-content:center;
+  color: var(--accent);
+  box-shadow: var(--shadow-sm);
+  transition: all .15s;
+}
+.dnav-btn:hover { background: var(--accent); color: white; border-color: var(--accent); }
+.dnav-inp {
+  flex: 1; height: 40px;
+  border: 2px solid rgba(41,128,212,0.2);
+  border-radius: 50px;
+  background: var(--surface);
+  font-size: 14px; font-weight: 700;
+  text-align: center;
+  color: var(--text); padding: 0 12px;
+  font-family: var(--font);
+  box-shadow: var(--shadow-sm);
+}
+.dnav-inp:focus { outline: none; border-color: var(--accent); }
+.today-btn {
+  padding: 0 14px; height: 40px;
+  border-radius: 50px;
+  border: 2px solid rgba(41,128,212,0.2);
+  background: var(--surface);
+  font-size: 12px; font-weight: 700; cursor: pointer;
+  color: var(--accent); font-family: var(--font);
+  white-space: nowrap;
+  box-shadow: var(--shadow-sm);
+}
+
+/* ── Cards ── */
+.card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  border: 1.5px solid var(--border);
+  box-shadow: var(--shadow);
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+.card-head {
+  display: flex; align-items:center; justify-content:space-between;
+  padding: 16px 18px 0;
+}
+.card-title {
+  display: flex; align-items:center; gap:8px;
+  font-size: 15px; font-weight: 800; color: var(--text);
+}
+.card-icon {
+  font-size: 18px; line-height:1;
+  width: 32px; height: 32px;
+  display: flex; align-items:center; justify-content:center;
+  border-radius: 10px;
+}
+.card-body { padding: 12px 18px 18px; }
+
+/* ── Form fields ── */
+.field-label {
+  font-size: 11px; font-weight: 800;
+  color: var(--text2); letter-spacing: .6px;
+  text-transform: uppercase; margin-bottom: 6px; display: block;
+}
+.field-group { margin-bottom: 12px; }
+.inp {
+  width: 100%;
+  padding: 11px 14px;
+  border: 2px solid rgba(41,128,212,0.18);
+  border-radius: var(--radius-sm);
+  font-size: 14px; font-weight: 600;
+  background: rgba(41,128,212,0.04);
+  color: var(--text);
+  font-family: var(--font);
+  transition: border-color .15s, box-shadow .15s;
+}
+.inp:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(41,128,212,0.12);
+  background: #fff;
+}
+.inp::placeholder { color: var(--text3); font-weight: 500; }
+textarea.inp { resize: vertical; min-height: 64px; line-height: 1.6; }
+select.inp {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%237c6ef2' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 40px; cursor: pointer;
+}
+.row { display: flex; gap: 10px; }
+.wt-wrap { position: relative; flex:1; }
+.wt-unit {
+  position: absolute; right: 14px; top:50%; transform: translateY(-50%);
+  font-size: 12px; font-weight: 700; color: var(--text3); pointer-events:none;
+}
+.wt-inp { padding-right: 36px; }
+.diff-pill {
+  font-size: 12px; font-weight: 800;
+  padding: 7px 12px; border-radius: 50px;
+  white-space: nowrap; flex-shrink:0;
+}
+.diff-up { background: #fff3e0; color: #e65100; }
+.diff-dn { background: #e3f2fd; color: #1565c0; }
+.diff-eq { background: rgba(41,128,212,0.08); color: var(--text3); }
+
+/* ── Vitality grid ── */
+/* ── Behavior score ── */
+.behavior-dim { margin-bottom: 16px; }
+.behavior-dim:last-child { margin-bottom: 0; }
+.behavior-dim-head {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+}
+.behavior-dim-icon {
+  font-size: 15px; line-height: 1;
+  width: 28px; height: 28px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.behavior-dim-title { font-size: 13px; font-weight: 800; color: var(--text); display:block; line-height:1.2; }
+.behavior-dim-desc  { font-size: 10px; font-weight: 500; color: var(--text3); display:block; margin-top:1px; }
+.behavior-score-val { font-size: 18px; font-weight: 900; flex-shrink:0; }
+.behavior-score-row { display:flex; gap:5px; }
+.behavior-score-btn {
+  flex: 1; padding: 8px 4px 6px;
+  border-radius: 12px;
+  border: 2px solid rgba(41,128,212,0.12);
+  background: rgba(255,255,255,0.7);
+  cursor: pointer; text-align: center;
+  font-family: var(--font); transition: all .18s;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+}
+.behavior-score-btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+.behavior-score-btn.bsa   { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+.bsn { font-size: 14px; font-weight: 900; display:block; line-height:1; }
+.bsl { font-size: 9px;  font-weight: 700; color: var(--text2); display:block; line-height:1.2; }
+.bss { font-size: 8px;  font-weight: 500; color: var(--text3); display:block; line-height:1.2; margin-top:1px; }
+
+/* ── Texture grid ── */
+.texture-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+.tex-btn {
+  padding: 10px 6px;
+  border-radius: var(--radius-sm);
+  border: 2px solid rgba(41,128,212,0.12);
+  background: rgba(255,255,255,0.7);
+  cursor: pointer; text-align:center;
+  font-family: var(--font);
+  transition: all .18s;
+}
+.tex-btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+.tex-btn.ta { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+.ti { font-size: 20px; display:block; line-height:1; margin-bottom:3px; }
+.tl { font-size: 11px; font-weight: 700; color: var(--text2); display:block; }
+
+/* ── Eat status ── */
+.eat-row { display:grid; grid-template-columns: repeat(3,1fr); gap:8px; }
+.eat-row-2 { display:grid; grid-template-columns: repeat(2,1fr); gap:8px; margin-top:8px; }
+.eat-btn {
+  padding: 11px 6px;
+  border-radius: var(--radius-sm);
+  border: 2px solid rgba(41,128,212,0.12);
+  background: rgba(255,255,255,0.7);
+  font-size: 13px; font-weight: 700; cursor: pointer;
+  text-align: center; color: var(--text2);
+  font-family: var(--font); transition: all .18s;
+}
+.eat-btn.ea-done  { background:#f0fdf4; border-color:#86efac; color:#166534; box-shadow: 0 4px 12px rgba(34,197,94,.2); }
+.eat-btn.ea-third { background:#ecfdf5; border-color:#6ee7b7; color:#065f46; box-shadow: 0 4px 12px rgba(16,185,129,.2); }
+.eat-btn.ea-two3  { background:#fff7ed; border-color:#fdba74; color:#c2410c; box-shadow: 0 4px 12px rgba(249,115,22,.15); }
+.eat-btn.ea-half  { background:#fff3e0; border-color:#fcd34d; color:#b45309; box-shadow: 0 4px 12px rgba(245,158,11,.15); }
+.eat-btn.ea-skip  { background:#fef2f2; border-color:#fca5a5; color:#b91c1c; box-shadow: 0 4px 12px rgba(239,68,68,.2); }
+
+/* ── Chips ── */
+.chips { display:flex; flex-wrap:wrap; gap:7px; }
+.chip {
+  padding: 7px 14px; border-radius: 50px;
+  font-size: 13px; font-weight: 700; cursor: pointer;
+  border: 2px solid rgba(41,128,212,0.15);
+  background: rgba(255,255,255,0.8);
+  color: var(--text2); transition: all .15s;
+  font-family: var(--font);
+}
+.chip.ac { border-color: var(--accent); background: rgba(41,128,212,0.1); color: var(--accent); box-shadow: 0 2px 8px rgba(41,128,212,.2); }
+.chip-sm { font-size: 12px; padding: 5px 12px; }
+
+/* ── Issue chips ── */
+.issue-chip {
+  padding: 6px 12px; border-radius: 50px;
+  font-size: 12px; font-weight: 700; cursor: pointer;
+  border: 2px solid rgba(41,128,212,0.12);
+  background: rgba(255,255,255,0.8);
+  color: var(--text2); transition: all .15s;
+  font-family: var(--font);
+}
+.issue-chip.ia { border-color: #fca5a5; background: #fef2f2; color: #b91c1c; }
+
+/* ── Add buttons ── */
+.add-btn {
+  display: flex; align-items:center; gap:4px;
+  font-size: 12px; font-weight: 800;
+  padding: 6px 12px; border-radius: 50px;
+  cursor: pointer; border: 2px solid;
+  background: transparent; font-family: var(--font);
+  transition: all .15s; white-space: nowrap;
+}
+.add-p { border-color: var(--accent); color: var(--accent); }
+.add-p:hover { background: var(--accent); color: white; }
+.add-s { border-color: rgba(41,128,212,0.25); color: var(--text2); }
+.add-s:hover { background: rgba(41,128,212,0.1); }
+.add-row { display:flex; gap:6px; }
+
+/* ── Sub items ── */
+.sub-item {
+  border: 2px solid rgba(41,128,212,0.12);
+  border-radius: var(--radius-sm);
+  padding: 12px 13px;
+  margin-bottom: 8px;
+  background: rgba(41,128,212,0.03);
+}
+.sub-row { display:flex; gap:8px; align-items:center; margin-bottom:8px; }
+.del-btn {
+  width: 32px; height: 32px; border-radius: 50%;
+  border: none; background: #fee2e2;
+  color: #dc2626; font-size: 14px; cursor: pointer;
+  display: flex; align-items:center; justify-content:center;
+  flex-shrink: 0; font-weight: 700;
+}
+
+/* ── Divider ── */
+.divider { height: 1.5px; background: rgba(41,128,212,0.1); margin: 12px 0; border-radius: 1px; }
+
+/* ── Empty ── */
+.empty-hint {
+  text-align: center; padding: 12px 0 4px;
+  color: var(--text3); font-size: 13px; font-weight: 600;
+}
+
+/* ── Reminders notification area ── */
+.notif-area {
+  margin: 8px 14px 0;
+  background: white;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+.notif-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 11px 14px;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  cursor: pointer; user-select: none;
+}
+.notif-header-left { display: flex; align-items: center; gap: 8px; }
+.notif-header-title { font-size: 13px; font-weight: 800; color: var(--text); }
+.notif-badge {
+  font-size: 10px; font-weight: 800;
+  background: #ef4444; color: white;
+  padding: 2px 7px; border-radius: 50px;
+}
+.notif-badge.ok { background: #22c55e; }
+.notif-toggle { font-size: 12px; color: var(--text3); font-weight: 600; }
+.notif-list { display: flex; flex-direction: column; }
+.notif-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 14px;
+  border-bottom: 1px solid rgba(0,0,0,0.04);
+  transition: background .12s;
+}
+.notif-row:last-child { border-bottom: none; }
+.notif-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  flex-shrink: 0;
+}
+.notif-icon {
+  font-size: 18px; line-height: 1;
+  width: 34px; height: 34px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.notif-info { flex: 1; min-width: 0; }
+.notif-title { font-size: 13px; font-weight: 700; color: var(--text); display: block; }
+.notif-meta { display: flex; gap: 8px; margin-top: 3px; flex-wrap: wrap; }
+.notif-meta-item {
+  font-size: 11px; font-weight: 600;
+  display: flex; align-items: center; gap: 3px;
+}
+.notif-action {
+  padding: 6px 12px; border-radius: 50px; border: none;
+  font-size: 12px; font-weight: 700; cursor: pointer;
+  font-family: var(--font); flex-shrink: 0;
+  transition: all .15s;
+}
+
+/* ── Bottom bar ── */
+.bottom-bar {
+  position: fixed; bottom: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 100%; max-width: 480px;
+  z-index: 60;
+  background: #f3f4f8;
+  padding: 10px 14px 16px;
+  display: flex; gap: 8px;
+}
+.save-btn {
+  flex: 2;
+  padding: 0 16px; height: 52px;
+  border: none; border-radius: 16px;
+  font-size: 15px; font-weight: 800; cursor: pointer;
+  font-family: var(--font); color: white;
+  transition: all .2s cubic-bezier(.34,1.3,.64,1);
+  box-shadow: 0 4px 16px rgba(58,111,168,0.35);
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.save-btn:active:not(:disabled) { transform: scale(0.97); }
+.save-btn.done { background: #b0bec5 !important; box-shadow: none; }
+.save-btn:disabled {
+  background: #e2e4ea !important;
+  color: #b0b6c4 !important;
+  box-shadow: none !important;
+  cursor: not-allowed;
+  transform: none !important;
+}
+.hist-btn {
+  flex: 1;
+  height: 52px;
+  border-radius: 16px;
+  border: none;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  font-size: 13px; font-weight: 700; cursor: pointer;
+  color: var(--text2); font-family: var(--font);
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+  transition: all .15s;
+}
+.hist-btn:active { transform: scale(0.97); }
+
+/* ── Reminders ── */
+.reminder-popup-overlay {
+  position: fixed; inset: 0;
+  background: rgba(10,20,50,0.5);
+  backdrop-filter: blur(6px);
+  z-index: 400;
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+}
+.reminder-popup {
+  background: white; border-radius: 24px;
+  width: 100%; max-width: 420px;
+  max-height: 80vh; overflow-y: auto;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.2);
+  animation: toast-in .25s cubic-bezier(.34,1.4,.64,1) forwards;
+}
+.reminder-popup-head {
+  padding: 20px 20px 0;
+  display: flex; align-items: center; gap: 10px;
+}
+.reminder-popup-title { font-size: 17px; font-weight: 900; color: var(--text); flex: 1; }
+.reminder-popup-close {
+  width: 32px; height: 32px; border-radius: 50%;
+  border: none; background: #f1f5f9; font-size: 16px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  color: var(--text2); font-weight: 700;
+}
+.reminder-popup-body { padding: 14px 20px 20px; display: flex; flex-direction: column; gap: 10px; }
+.reminder-item {
+  border-radius: 16px; padding: 14px 16px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.reminder-item-head { display: flex; align-items: center; gap: 10px; }
+.reminder-item-icon { font-size: 22px; line-height: 1; }
+.reminder-item-info { flex: 1; min-width: 0; }
+.reminder-item-title { font-size: 14px; font-weight: 800; color: var(--text); display: block; }
+.reminder-item-sub { font-size: 12px; font-weight: 600; display: block; margin-top: 2px; }
+.reminder-badge {
+  font-size: 11px; font-weight: 800; padding: 4px 10px;
+  border-radius: 50px; white-space: nowrap; flex-shrink: 0;
+}
+.reminder-done-btn {
+  padding: 8px 16px; border-radius: 50px; border: none;
+  font-size: 13px; font-weight: 700; cursor: pointer;
+  font-family: var(--font); align-self: flex-start;
+  transition: all .15s;
+}
+.reminder-settings { padding: 10px 0 0; }
+.reminder-settings-row {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+}
+.reminder-settings-lbl { font-size: 12px; font-weight: 700; color: var(--text2); flex: 1; }
+.reminder-cycle-inp {
+  width: 56px; padding: 6px 8px; border-radius: 8px;
+  border: 1.5px solid rgba(41,128,212,0.2);
+  font-size: 13px; font-weight: 700; text-align: center;
+  background: rgba(41,128,212,0.04); color: var(--text);
+  font-family: var(--font);
+}
+.reminder-cycle-inp:focus { outline: none; border-color: var(--accent); }
+
+/* ── Reminder banner cards ── */
+.reminder-banners { padding: 10px 14px 0; display: flex; flex-direction: column; gap: 8px; }
+.reminder-banner {
+  border-radius: 14px; padding: 12px 14px;
+  display: flex; align-items: center; gap: 12px;
+  cursor: pointer; transition: opacity .15s;
+}
+.reminder-banner:hover { opacity: .92; }
+.reminder-banner-icon { font-size: 22px; line-height: 1; flex-shrink: 0; }
+.reminder-banner-info { flex: 1; min-width: 0; }
+.reminder-banner-title { font-size: 13px; font-weight: 800; color: white; display: block; }
+.reminder-banner-sub { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.8); display: block; margin-top: 2px; }
+.reminder-banner-action {
+  font-size: 12px; font-weight: 800; padding: 6px 12px;
+  border-radius: 50px; border: none; cursor: pointer;
+  font-family: var(--font); flex-shrink: 0;
+  background: rgba(255,255,255,0.25); color: white;
+  transition: background .15s;
+}
+.reminder-banner-action:hover { background: rgba(255,255,255,0.4); }
+.reminder-bell-btn {
+  position: fixed; bottom: 88px; right: 16px; z-index: 55;
+  width: 46px; height: 46px; border-radius: 50%;
+  border: none; background: white;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  font-size: 20px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: transform .2s;
+}
+.reminder-bell-btn:hover { transform: scale(1.08); }
+.reminder-bell-badge {
+  position: absolute; top: -2px; right: -2px;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: #ef4444; color: white;
+  font-size: 10px; font-weight: 900;
+  display: flex; align-items: center; justify-content: center;
+  border: 2px solid white;
+}
+
+/* ── Training ── */
+.training-item {
+  border: 1.5px solid rgba(41,128,212,0.15);
+  border-radius: var(--radius-sm);
+  background: rgba(255,255,255,0.7);
+  margin-bottom: 7px;
+  overflow: hidden;
+  transition: all .15s;
+}
+.training-item.selected {
+  border-color: var(--accent);
+  background: rgba(41,128,212,0.04);
+}
+.training-item-head {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 13px; cursor: pointer;
+}
+.training-item-icon {
+  font-size: 18px; width: 32px; height: 32px; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(41,128,212,0.08); flex-shrink: 0;
+}
+.training-item-label { font-size: 14px; font-weight: 700; color: var(--text); flex: 1; }
+.training-check {
+  width: 22px; height: 22px; border-radius: 50%;
+  border: 2px solid rgba(41,128,212,0.25);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: all .15s;
+}
+.training-item.selected .training-check {
+  background: var(--accent); border-color: var(--accent);
+}
+.training-status-row {
+  display: flex; gap: 5px; flex-wrap: wrap;
+  padding: 0 13px 11px;
+}
+.tstatus-btn {
+  padding: 4px 11px; border-radius: 50px;
+  font-size: 12px; font-weight: 700; cursor: pointer;
+  border: 1.5px solid; font-family: var(--font);
+  transition: all .13s;
+}
+
+/* ── Activity log ── */
+.activity-toggle {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; border-radius: var(--radius-sm);
+  border: 2px solid rgba(41,128,212,0.15);
+  background: rgba(255,255,255,0.7);
+  cursor: pointer; font-family: var(--font);
+  transition: all .18s; margin-bottom: 10px;
+}
+.activity-toggle.on { border-color: var(--accent); background: rgba(41,128,212,0.06); }
+.activity-toggle-dot {
+  width: 36px; height: 20px; border-radius: 10px;
+  background: #d1d5db; position: relative; flex-shrink: 0;
+  transition: background .2s;
+}
+.activity-toggle.on .activity-toggle-dot { background: var(--accent); }
+.activity-toggle-dot::after {
+  content: '';
+  position: absolute; top: 2px; left: 2px;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: white; transition: transform .2s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+}
+.activity-toggle.on .activity-toggle-dot::after { transform: translateX(16px); }
+.activity-toggle-label { font-size: 14px; font-weight: 700; color: var(--text2); flex: 1; }
+.activity-toggle.on .activity-toggle-label { color: var(--accent); }
+.activity-expand {
+  background: rgba(41,128,212,0.04);
+  border: 1.5px solid rgba(41,128,212,0.15);
+  border-radius: var(--radius-sm);
+  padding: 12px 13px; margin-bottom: 10px;
+}
+
+/* ── Medication record ── */
+.med-item {
+  border: 2px solid #d1fae5;
+  border-radius: var(--radius-sm);
+  padding: 12px 13px; margin-bottom: 8px;
+  background: #f0fdf4;
+}
+.med-label {
+  font-size: 10px; font-weight: 800; color: #065f46;
+  letter-spacing: .4px; text-transform: uppercase;
+  margin-bottom: 4px; display: block;
+}
+.med-inp {
+  width: 100%; padding: 8px 11px;
+  border: 1.5px solid #a7f3d0;
+  border-radius: 10px; font-size: 13px; font-weight: 600;
+  background: white; color: var(--text); font-family: var(--font);
+  transition: border-color .15s;
+}
+.med-inp:focus { outline: none; border-color: #10b981; }
+.med-inp::placeholder { color: var(--text3); font-weight: 500; }
+.med-given-btn {
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 14px; border-radius: 50px;
+  border: 2px solid #a7f3d0; background: white;
+  font-size: 13px; font-weight: 700; cursor: pointer;
+  color: #065f46; font-family: var(--font); transition: all .15s;
+}
+.med-given-btn.given { background: #10b981; border-color: #10b981; color: white; }
+.med-check { width: 18px; height: 18px; border-radius: 50%; border: 2px solid #a7f3d0; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.med-given-btn.given .med-check { background: white; border-color: white; }
+
+/* ── Vet record ── */
+.vet-item {
+  border: 2px solid #bfdbfe;
+  border-radius: var(--radius-sm);
+  padding: 12px 13px; margin-bottom: 8px;
+  background: #eff6ff;
+}
+.vet-row { display:flex; gap:8px; align-items:center; margin-bottom:8px; }
+.vet-label {
+  font-size: 10px; font-weight: 800; color: #1e40af;
+  letter-spacing: .4px; text-transform: uppercase;
+  margin-bottom: 4px; display: block;
+}
+.vet-inp {
+  width: 100%; padding: 8px 11px;
+  border: 1.5px solid #bfdbfe;
+  border-radius: 10px; font-size: 13px; font-weight: 600;
+  background: white; color: var(--text); font-family: var(--font);
+  transition: border-color .15s;
+}
+.vet-inp:focus { outline: none; border-color: #3b82f6; }
+.vet-inp::placeholder { color: var(--text3); font-weight: 500; }
+textarea.vet-inp { resize: vertical; min-height: 56px; line-height: 1.5; }
+
+/* ── Vomit detail ── */
+.vomit-panel {
+  margin-top: 10px;
+  background: #fef2f2;
+  border: 1.5px solid #fca5a5;
+  border-radius: var(--radius-sm);
+  padding: 12px 13px;
+}
+.vomit-panel-title {
+  font-size: 11px; font-weight: 800; color: #b91c1c;
+  letter-spacing: .4px; text-transform: uppercase;
+  margin-bottom: 10px; display: flex; align-items: center; gap: 5px;
+}
+.vomit-section { margin-bottom: 10px; }
+.vomit-section:last-child { margin-bottom: 0; }
+.vomit-section-lbl {
+  font-size: 10px; font-weight: 800; color: #b91c1c;
+  letter-spacing: .3px; text-transform: uppercase;
+  margin-bottom: 5px; display: block;
+}
+.vchip {
+  padding: 5px 11px; border-radius: 50px;
+  font-size: 12px; font-weight: 700; cursor: pointer;
+  border: 1.5px solid #fca5a5;
+  background: white; color: #b91c1c;
+  font-family: var(--font); transition: all .13s;
+}
+.vchip.va { background: #dc2626; color: white; border-color: #dc2626; }
+
+/* ── Breath rate ── */
+.breath-rate-wrap {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: #fef2f2; border: 2px solid #fca5a5;
+  border-radius: 50px; padding: 3px 10px 3px 6px;
+  margin-left: 6px; vertical-align: middle;
+}
+.breath-rate-inp {
+  width: 44px; border: none; background: transparent;
+  font-size: 13px; font-weight: 900; color: #b91c1c;
+  font-family: var(--font); text-align: center; padding: 0;
+}
+.breath-rate-inp:focus { outline: none; }
+.breath-rate-inp::placeholder { color: #fca5a5; font-weight: 600; }
+.breath-rate-unit {
+  font-size: 11px; font-weight: 700; color: #b91c1c; white-space: nowrap;
+}
+
+/* ── Issue count ── */
+.issue-count-wrap {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: white; border: 2px solid #fca5a5;
+  border-radius: 50px; padding: 2px 6px 2px 4px;
+  margin-left: 4px; vertical-align: middle;
+}
+.issue-count-btn {
+  width: 22px; height: 22px; border-radius: 50%;
+  border: none; cursor: pointer; font-size: 14px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  line-height: 1; flex-shrink: 0; font-family: var(--font);
+  transition: all .12s;
+}
+.issue-count-btn.minus { background: #fee2e2; color: #dc2626; }
+.issue-count-btn.plus  { background: #fee2e2; color: #dc2626; }
+.issue-count-btn:hover { opacity: .75; }
+.issue-count-val {
+  font-size: 13px; font-weight: 900; color: #b91c1c;
+  min-width: 16px; text-align: center; font-family: var(--font);
+}
+
+/* ── Media links ── */
+.media-link-row {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 8px;
+}
+.media-link-inp {
+  flex: 1; padding: 9px 12px;
+  border: 2px solid rgba(41,128,212,0.18);
+  border-radius: var(--radius-sm);
+  font-size: 13px; font-weight: 500;
+  background: rgba(41,128,212,0.04);
+  color: var(--text); font-family: var(--font);
+  transition: border-color .15s;
+}
+.media-link-inp:focus { outline: none; border-color: var(--accent); background: white; }
+.media-link-inp::placeholder { color: var(--text3); }
+.media-link-open {
+  width: 34px; height: 34px; border-radius: 10px;
+  border: 2px solid rgba(41,128,212,0.2);
+  background: white; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; flex-shrink: 0;
+  color: var(--accent); text-decoration: none;
+  transition: all .15s;
+}
+.media-link-open:hover { background: var(--accent); color: white; border-color: var(--accent); }
+.media-link-label {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11px; font-weight: 700;
+  background: rgba(41,128,212,0.08);
+  color: var(--accent);
+  padding: 2px 8px; border-radius: 6px;
+  flex-shrink: 0; white-space: nowrap;
+}
+
+.export-btn {
+  width: 46px; height: 52px;
+  border-radius: 16px;
+  border: none;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  font-size: 18px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .15s; flex-shrink: 0;
+}
+.export-btn:active { transform: scale(0.97); }
+
+/* ── Save toast ── */
+.save-toast {
+  position: fixed; top: 50%; left: 50%;
+  transform: translate(-50%, -50%) scale(1);
+  z-index: 300;
+  background: white;
+  border-radius: 24px;
+  padding: 28px 36px;
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.18), 0 4px 16px rgba(0,0,0,0.10);
+  animation: toast-in .22s cubic-bezier(.34,1.56,.64,1) forwards;
+  pointer-events: none;
+  min-width: 180px;
+  text-align: center;
+}
+.save-toast.out {
+  animation: toast-out .2s ease-in forwards;
+}
+@keyframes toast-in {
+  from { opacity: 0; transform: translate(-50%,-50%) scale(0.8); }
+  to   { opacity: 1; transform: translate(-50%,-50%) scale(1); }
+}
+@keyframes toast-out {
+  from { opacity: 1; transform: translate(-50%,-50%) scale(1); }
+  to   { opacity: 0; transform: translate(-50%,-50%) scale(0.85); }
+}
+.save-toast-icon {
+  width: 52px; height: 52px; border-radius: 50%;
+  background: #e8f5e9;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px;
+}
+.save-toast-title {
+  font-size: 16px; font-weight: 900; color: var(--text);
+  font-family: var(--font);
+}
+.save-toast-sub {
+  font-size: 12px; font-weight: 600; color: var(--text3);
+  font-family: var(--font);
+}
+.toast-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.25);
+  z-index: 299;
+  animation: toast-bg-in .2s ease forwards;
+  pointer-events: none;
+}
+@keyframes toast-bg-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.overlay {
+  position: fixed; inset: 0;
+  background: rgba(10,30,70,0.5);
+  backdrop-filter: blur(6px);
+  z-index: 200;
+  display: flex; align-items: flex-end; justify-content: center;
+}
+.picker-sheet {
+  background: #f0f7ff;
+  border-radius: 28px 28px 0 0;
+  width: 100%; max-width: 480px;
+  max-height: 74vh;
+  display: flex; flex-direction:column;
+  box-shadow: 0 -8px 40px rgba(30,100,180,0.25);
+  overflow: hidden;
+}
+.picker-handle {
+  width: 40px; height: 4px; border-radius: 2px;
+  background: rgba(41,128,212,0.25);
+  margin: 14px auto 0;
+  flex-shrink: 0;
+}
+.picker-head {
+  display: flex; justify-content:space-between; align-items:center;
+  padding: 12px 20px 8px; flex-shrink:0;
+}
+.picker-title { font-size: 16px; font-weight: 900; color: var(--text); }
+.picker-close {
+  width: 32px; height: 32px; border-radius: 50%;
+  border: none; background: rgba(41,128,212,0.12);
+  font-size: 16px; cursor: pointer;
+  display: flex; align-items:center; justify-content:center;
+  color: var(--text2); font-weight:700;
+}
+.picker-search {
+  margin: 0 16px 10px;
+  padding: 11px 16px;
+  border: 2px solid rgba(41,128,212,0.25);
+  border-radius: 50px;
+  font-size: 14px; font-weight: 600;
+  background: white;
+  color: var(--text); font-family: var(--font);
+  flex-shrink:0;
+}
+.picker-search:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px rgba(41,128,212,.1); }
+.picker-list { overflow-y: auto; flex:1; padding: 0 10px 20px; }
+.pitem {
+  padding: 11px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer; transition: background .12s;
+}
+.pitem:hover { background: rgba(41,128,212,0.07); }
+.pitem-brand { font-size: 11px; font-weight: 700; color: var(--text3); display:block; }
+.pitem-name { font-size: 14px; font-weight: 700; color: var(--text); display:block; margin-top:2px; }
+.pitem-tags { display:flex; gap:5px; flex-wrap:wrap; margin-top:5px; }
+.pitem-tag {
+  font-size: 11px; font-weight: 600;
+  background: rgba(41,128,212,0.08); color: var(--text2);
+  padding: 2px 8px; border-radius: 6px;
+}
+
+/* ── History page ── */
+.hist-page {
+  position: fixed; inset:0;
+  background: var(--bg);
+  z-index: 100; overflow-y:auto;
+  max-width: 480px; margin:0 auto;
+}
+.hist-page::before {
+  content:'';
+  position: fixed; top: -60px; left: -60px;
+  width: 280px; height: 280px; border-radius:50%;
+  background: radial-gradient(circle, rgba(96,170,232,.3) 0%, transparent 70%);
+  pointer-events:none;
+}
+.hist-header {
+  position:sticky; top:0;
+  background: rgba(220,236,250,0.95);
+  backdrop-filter: blur(12px);
+  border-bottom: 1.5px solid rgba(41,128,212,0.1);
+  padding: 14px 16px;
+  display:flex; align-items:center; gap:12px; z-index:10;
+}
+.hist-back {
+  width: 38px; height: 38px; border-radius: 50%;
+  border: 2px solid rgba(41,128,212,0.2);
+  background: white; cursor: pointer;
+  font-size: 18px; display:flex; align-items:center; justify-content:center;
+  color: var(--accent); box-shadow: var(--shadow-sm);
+}
+.hist-title { font-size: 17px; font-weight: 900; color: var(--text); }
+.hist-list { padding: 14px 14px 40px; }
+.hcard {
+  background: var(--surface);
+  border-radius: var(--radius);
+  border: 1.5px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 10px; overflow:hidden;
+}
+.hrow {
+  display:flex; align-items:center;
+  padding: 13px 16px; gap:8px; cursor:pointer;
+}
+.hdate { font-size: 14px; font-weight: 800; flex:1; color: var(--text); }
+.htag {
+  font-size: 11px; font-weight: 700;
+  padding: 3px 9px; border-radius: 50px;
+  background: rgba(41,128,212,0.1); color: var(--accent);
+}
+.hexpand {
+  padding: 10px 16px 14px;
+  border-top: 1.5px solid rgba(41,128,212,0.08);
+  font-size: 13px; color: var(--text2);
+  display:flex; flex-direction:column; gap:5px;
+}
+.hexp-row { display:flex; gap:8px; align-items:flex-start; }
+.hexp-k {
+  min-width: 52px; color: var(--text3);
+  font-size: 12px; font-weight: 700;
+  padding-top: 1px; flex-shrink:0;
+}
+.hdel-btn {
+  margin-top:8px; align-self:flex-start;
+  font-size: 12px; font-weight: 700;
+  color: #dc2626; background: #fef2f2;
+  border: none; border-radius: 50px;
+  padding: 6px 14px; cursor: pointer;
+  font-family: var(--font);
+}
+
+/* ── Analytics ── */
+.an-range { display:flex; gap:6px; padding: 4px 0 10px; }
+.an-range-btn {
+  padding: 6px 14px; border-radius: 50px;
+  border: 2px solid rgba(41,128,212,0.15);
+  background: rgba(255,255,255,0.7);
+  font-size: 12px; font-weight: 700; cursor: pointer;
+  color: var(--text2); font-family: var(--font);
+  transition: all .15s;
+}
+.an-range-btn.active { color: white; border-color: transparent; box-shadow: 0 3px 10px rgba(41,128,212,.3); }
+.an-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  border: 1.5px solid var(--border);
+  box-shadow: var(--shadow);
+  padding: 16px 18px; margin-bottom: 10px;
+}
+.an-card-title {
+  font-size: 14px; font-weight: 800; color: var(--text);
+  display:flex; align-items:center; gap:8px; margin-bottom: 14px;
+}
+.stat-row { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.stat-box {
+  text-align:center; padding:14px 8px;
+  background: rgba(41,128,212,0.05);
+  border-radius: var(--radius-sm);
+  border: 1.5px solid rgba(41,128,212,0.1);
+}
+.stat-n { font-size: 24px; font-weight: 900; display:block; }
+.stat-l { font-size: 11px; font-weight: 700; color: var(--text2); display:block; margin-top:3px; }
+.no-data {
+  text-align: center; padding: 24px 0;
+  color: var(--text3); font-size: 13px; font-weight: 600;
+}
+.rank-item { display:flex; align-items:center; gap:10px; padding:7px 0; border-bottom:1.5px solid rgba(41,128,212,.06); }
+.rank-item:last-child { border-bottom: none; }
+.rank-no { font-size:12px; font-weight:900; color:var(--text3); width:18px; text-align:center; flex-shrink:0; }
+.rank-bar-area { flex:1; }
+.rank-name { font-size:12px; font-weight:700; color:var(--text); margin-bottom:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.rank-bar-bg { height:7px; border-radius:4px; background:rgba(41,128,212,.1); overflow:hidden; }
+.rank-bar-fill { height:100%; border-radius:4px; transition:width .5s ease; }
+.rank-n { font-size:12px; font-weight:800; color:var(--text2); flex-shrink:0; min-width:28px; text-align:right; }
+.iss-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+.iss-name { font-size:12px; font-weight:700; color:var(--text2); width:110px; flex-shrink:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.iss-bar-bg { flex:1; background:rgba(41,128,212,.1); border-radius:6px; height:22px; overflow:hidden; position:relative; }
+.iss-bar-fill { height:100%; border-radius:6px; display:flex; align-items:center; padding-left:10px; transition:width .5s ease; }
+.iss-n { font-size:11px; font-weight:900; color:white; }
+.attitude-row { display:flex; gap:8px; }
+.att-box { flex:1; text-align:center; padding:14px 8px; border-radius:var(--radius-sm); }
+.att-emoji { font-size:26px; display:block; margin-bottom:4px; }
+.att-n { font-size:20px; font-weight:900; display:block; }
+.att-l { font-size:11px; font-weight:700; color:var(--text2); display:block; margin-top:2px; }
+.att-pct { font-size:11px; color:var(--text3); font-weight:600; }
+
+/* ── Analytics sub tabs ── */
+.an-subtabs { display:flex; gap:6px; padding: 6px 0 10px; overflow-x:auto; }
+.an-subtab {
+  flex-shrink:0; padding:7px 14px;
+  border-radius:50px; border:2px solid rgba(41,128,212,0.15);
+  background:rgba(255,255,255,0.7);
+  font-size:13px; font-weight:700; cursor:pointer;
+  color:var(--text2); font-family:var(--font);
+  transition:all .15s; white-space:nowrap;
+}
+.an-subtab.active { color:white; border-color:transparent; box-shadow:0 3px 10px rgba(41,128,212,.3); }
+
+/* ── Issue group ── */
+.iss-grp { margin-bottom: 14px; }
+.iss-grp-lbl {
+  font-size:11px; font-weight:800; color:var(--text3);
+  letter-spacing:.5px; text-transform:uppercase;
+  margin-bottom:6px; display:flex; align-items:center; gap:4px;
+}
+`;
+
+// ─── SVG Charts ───────────────────────────────────────────────────────────────
+function WeightChart({ records, color }) {
+  const pts = records.filter(r => r.weight && !isNaN(parseFloat(r.weight)))
+    .slice(-30).map(r => ({ date: r.date, w: parseFloat(r.weight) }));
+  if (pts.length < 2) return <div className="no-data">記錄 2 天以上才會顯示趨勢 ✨</div>;
+  const W=420, H=160, PL=40, PR=14, PT=14, PB=28;
+  const iw=W-PL-PR, ih=H-PT-PB;
+  const ws=pts.map(p=>p.w);
+  const mn=Math.min(...ws), mx=Math.max(...ws), rng=(mx-mn)||0.5;
+  const pad=rng*0.22, yMin=mn-pad, yMax=mx+pad;
+  const xOf=i=>PL+(i/(pts.length-1))*iw;
+  const yOf=v=>PT+ih-((v-yMin)/(yMax-yMin))*ih;
+  const pathD=pts.map((p,i)=>`${i===0?"M":"L"}${xOf(i).toFixed(1)},${yOf(p.w).toFixed(1)}`).join(" ");
+  const areaD=pathD+` L${xOf(pts.length-1).toFixed(1)},${(PT+ih).toFixed(1)} L${PL.toFixed(1)},${(PT+ih).toFixed(1)} Z`;
+  const gid=`wg${color.replace(/[^a-z0-9]/gi,"")}`;
+  const yTicks=[0,.5,1].map(t=>yMin+(yMax-yMin)*t);
+  const xLbls=[0,Math.floor((pts.length-1)/2),pts.length-1].filter((v,i,a)=>a.indexOf(v)===i);
+  return (
+    <div style={{width:"100%",overflow:"hidden"}}>
+      <svg viewBox={`0 0 ${W} ${H}`} style={{width:"100%",height:"auto",display:"block"}}>
+        <defs>
+          <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={color} stopOpacity="0.3"/>
+            <stop offset="100%" stopColor={color} stopOpacity="0.02"/>
+          </linearGradient>
+        </defs>
+        {yTicks.map((t,i)=>(
+          <g key={i}>
+            <line x1={PL} y1={yOf(t)} x2={W-PR} y2={yOf(t)} stroke="rgba(41,128,212,0.08)" strokeWidth="1.5" strokeDasharray="4,4"/>
+            <text x={PL-5} y={yOf(t)+4} textAnchor="end" fontSize="10" fontWeight="600" fill="#80aad4">{t.toFixed(1)}</text>
+          </g>
+        ))}
+        <path d={areaD} fill={`url(#${gid})`}/>
+        <path d={pathD} fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+        {pts.map((p,i)=>(
+          <circle key={i} cx={xOf(i)} cy={yOf(p.w)} r="4.5" fill={color} stroke="white" strokeWidth="2.5"/>
+        ))}
+        {xLbls.map(i=>(
+          <text key={i} x={xOf(i)} y={H-4} textAnchor="middle" fontSize="10" fontWeight="600" fill="#80aad4">{pts[i].date.slice(5)}</text>
+        ))}
+      </svg>
+    </div>
+  );
+}
+
+function VitalityDonut({ records, color }) {
+  const counts={};
+  VITALITY.forEach(v=>counts[v.v]=0);
+  records.forEach(r=>{if(r.vitality&&counts[r.vitality]!==undefined)counts[r.vitality]++;});
+  const total=Object.values(counts).reduce((a,b)=>a+b,0);
+  if(!total) return <div className="no-data">尚無活力記錄 💫</div>;
+  const COLS={"🌟":"#f59e0b","😊":"#22c55e","😴":"#818cf8","😟":"#f472b6","🚨":"#ef4444"};
+  const CX=75,CY=75,R=60,IR=36;
+  let sa=-Math.PI/2;
+  const slices=VITALITY.map(v=>{
+    const val=counts[v.v], angle=(val/total)*Math.PI*2;
+    const s={v:v.v,label:v.label,val,angle,sa,color:COLS[v.v]};
+    sa+=angle; return s;
+  }).filter(s=>s.val>0);
+  const arc=(sa,ea,r,ir)=>{
+    const x1=CX+r*Math.cos(sa),y1=CY+r*Math.sin(sa);
+    const x2=CX+r*Math.cos(ea),y2=CY+r*Math.sin(ea);
+    const x3=CX+ir*Math.cos(ea),y3=CY+ir*Math.sin(ea);
+    const x4=CX+ir*Math.cos(sa),y4=CY+ir*Math.sin(sa);
+    const lg=(ea-sa)>Math.PI?1:0;
+    return `M${x1.toFixed(2)},${y1.toFixed(2)} A${r},${r} 0 ${lg},1 ${x2.toFixed(2)},${y2.toFixed(2)} L${x3.toFixed(2)},${y3.toFixed(2)} A${ir},${ir} 0 ${lg},0 ${x4.toFixed(2)},${y4.toFixed(2)} Z`;
+  };
+  return (
+    <div style={{display:"flex",alignItems:"center",gap:14}}>
+      <svg viewBox="0 0 150 150" style={{width:120,height:120,flexShrink:0}}>
+        {slices.map((s,i)=><path key={i} d={arc(s.sa,s.sa+s.angle,R,IR)} fill={s.color}/>)}
+        <text x={CX} y={CY-5} textAnchor="middle" fontSize="24" fill="#0f2d52">{slices.sort((a,b)=>b.val-a.val)[0]?.v}</text>
+        <text x={CX} y={CY+13} textAnchor="middle" fontSize="11" fontWeight="700" fill="#80aad4">{total} 天</text>
+      </svg>
+      <div style={{flex:1}}>
+        {slices.sort((a,b)=>b.val-a.val).map(s=>(
+          <div key={s.v} style={{display:"flex",alignItems:"center",gap:7,marginBottom:6}}>
+            <span style={{width:10,height:10,borderRadius:"50%",background:s.color,flexShrink:0,display:"inline-block"}}/>
+            <span style={{fontSize:12,fontWeight:700,color:"#3a6fa8",flex:1}}>{s.v} {s.label}</span>
+            <span style={{fontSize:13,fontWeight:900,color:"#0f2d52"}}>{Math.round(s.val/total*100)}%</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function EatenChart({ records, color }) {
+  if(!records.length) return <div className="no-data">尚無飲食記錄 🐾</div>;
+  const recent=records.slice(-28);
+  const withEat=recent.filter(r=>r.wets?.[0]?.eaten);
+  if(!withEat.length) return <div className="no-data">尚無濕食記錄 🐾</div>;
+  const done=withEat.filter(r=>r.wets[0].eaten==="✓").length;
+  const half=withEat.filter(r=>r.wets[0].eaten==="◑"||r.wets[0].eaten==="½").length;
+  const skip=withEat.filter(r=>r.wets[0].eaten==="✕").length;
+  const tot=withEat.length;
+  const bars=[{l:"吃完",v:done,c:"#22c55e"},{l:"吃一半",v:half,c:"#f97316"},{l:"沒吃",v:skip,c:"#ef4444"}];
+  const maxV=Math.max(...bars.map(b=>b.v),1);
+  const W=380,H=120,PL=52,PB=26,PT=10,PR=16;
+  const bw=(W-PL-PR)/bars.length, ih=H-PT-PB;
+  return (
+    <div>
+      <div style={{textAlign:"center",marginBottom:12}}>
+        <span style={{fontSize:32,fontWeight:900,color}}>{Math.round(done/tot*100)}%</span>
+        <span style={{fontSize:13,fontWeight:700,color:"#80aad4",marginLeft:8}}>近{tot}次吃完率</span>
+      </div>
+      <div style={{width:"100%",overflow:"hidden"}}>
+        <svg viewBox={`0 0 ${W} ${H}`} style={{width:"100%",height:"auto",display:"block"}}>
+          {bars.map((b,i)=>{
+            const bh=(b.v/maxV)*ih, x=PL+i*bw+bw*0.18, bwd=bw*0.64, y=PT+ih-bh;
+            return (
+              <g key={i}>
+                <rect x={x} y={PT} width={bwd} height={ih} rx="8" fill="rgba(41,128,212,0.06)"/>
+                <rect x={x} y={y} width={bwd} height={bh} rx="8" fill={b.c}/>
+                <text x={x+bwd/2} y={H-5} textAnchor="middle" fontSize="11" fontWeight="700" fill="#80aad4">{b.l}</text>
+                {b.v>0 && <text x={x+bwd/2} y={y-5} textAnchor="middle" fontSize="12" fontWeight="900" fill={b.c}>{b.v}</text>}
+              </g>
+            );
+          })}
+        </svg>
+      </div>
+    </div>
+  );
+}
+
+function FoodRanking({ records, color }) {
+  const counts={};
+  records.forEach(r=>{(r.wets||[]).forEach(w=>{const f=w.food?.trim();if(f)counts[f]=(counts[f]||0)+1;})});
+  const sorted=Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  if(!sorted.length) return <div className="no-data">尚無濕食記錄 🐾</div>;
+  const max=sorted[0][1];
+  return (
+    <div>
+      {sorted.map(([name,count],i)=>(
+        <div key={i} className="rank-item">
+          <div className="rank-no" style={{color:i===0?color:"#80aad4"}}>{i+1}</div>
+          <div className="rank-bar-area">
+            <div className="rank-name">{name}</div>
+            <div className="rank-bar-bg">
+              <div className="rank-bar-fill" style={{width:`${count/max*100}%`,background:i===0?color:"rgba(41,128,212,0.3)"}}/>
+            </div>
+          </div>
+          <div className="rank-n">{count}次</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function IssueHeatmap({ records, color }) {
+  const counts={};
+  ALL_ISSUES.forEach(v=>counts[v]=0);
+  records.forEach(r=>(r.issues||[]).forEach(v=>{if(counts[v]!==undefined)counts[v]++;}));
+  const sorted=Object.entries(counts).filter(([,n])=>n>0).sort((a,b)=>b[1]-a[1]);
+  if(!sorted.length) return <div className="no-data">近期無問題狀況記錄 🎉</div>;
+  const max=sorted[0][1];
+  return (
+    <div>
+      {sorted.map(([name,count])=>(
+        <div key={name} className="iss-row">
+          <div className="iss-name">{name}</div>
+          <div className="iss-bar-bg">
+            <div className="iss-bar-fill" style={{width:`${Math.max(count/max*100,10)}%`,background:`${color}cc`}}>
+              <span className="iss-n">{count}</span>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function AttitudeChart({ records }) {
+  const counts={"😍":0,"⚡":0,"🐢":0};
+  records.forEach(r=>{(r.wets||[]).forEach(w=>{if(w.attitude&&counts[w.attitude]!==undefined)counts[w.attitude]++;})});
+  const total=Object.values(counts).reduce((a,b)=>a+b,0);
+  if(!total) return <div className="no-data">尚無吃飯態度記錄 🐾</div>;
+  const items=[
+    {v:"😍",l:"吃愛",bg:"#fce7f3",c:"#db2777"},
+    {v:"⚡",l:"馬上吃",bg:"#fef3c7",c:"#d97706"},
+    {v:"🐢",l:"等很久",bg:"#f1f5f9",c:"#64748b"},
+  ];
+  return (
+    <div className="attitude-row">
+      {items.map(it=>(
+        <div key={it.v} className="att-box" style={{background:it.bg}}>
+          <span className="att-emoji">{it.v}</span>
+          <span className="att-n" style={{color:it.c}}>{counts[it.v]}</span>
+          <span className="att-l">{it.l}</span>
+          <span className="att-pct">{total?Math.round(counts[it.v]/total*100):0}%</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── Analytics Page ────────────────────────────────────────────────────────────
+function AnalyticsPage({ catId, color }) {
+  const [records, setRecords] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+  const [range, setRange] = React.useState(30);
+  const [subTab, setSubTab] = React.useState("overview");
+
+  React.useEffect(()=>{
+    (async()=>{ setLoading(true); const all=await loadAllRecords(catId); setRecords(all); setLoading(false); })();
+  },[catId]);
+
+  const filtered = range===0 ? records : records.slice(-range);
+  const totalDays=filtered.length;
+  const wsAll=filtered.filter(r=>r.weight).map(r=>parseFloat(r.weight));
+  const avgW=wsAll.length?(wsAll.reduce((a,b)=>a+b,0)/wsAll.length).toFixed(2):"—";
+  const issdays=filtered.filter(r=>r.issues?.length>0).length;
+
+  const subTabs=[{id:"overview",l:"📊 總覽"},{id:"weight",l:"⚖️ 體重"},{id:"food",l:"🐟 飲食"},{id:"health",l:"⚠️ 健康"}];
+  const ranges=[{v:7,l:"7天"},{v:14,l:"14天"},{v:30,l:"30天"},{v:0,l:"全部"}];
+
+  return (
+    <div className="page-analytics">
+      <div className="an-subtabs">
+        {subTabs.map(t=>(
+          <button key={t.id} className={`an-subtab${subTab===t.id?" active":""}`}
+            style={subTab===t.id?{background:color}:{}}
+            onClick={()=>setSubTab(t.id)}>{t.l}</button>
+        ))}
+      </div>
+      <div className="an-range">
+        {ranges.map(r=>(
+          <button key={r.v} className={`an-range-btn${range===r.v?" active":""}`}
+            style={range===r.v?{background:color}:{}}
+            onClick={()=>setRange(r.v)}>{r.l}</button>
+        ))}
+      </div>
+
+      {loading && <div className="no-data" style={{paddingTop:40}}>載入中…</div>}
+
+      {!loading && subTab==="overview" && <>
+        <div className="an-card">
+          <div className="an-card-title">📋 紀錄摘要</div>
+          <div className="stat-row">
+            <div className="stat-box"><span className="stat-n" style={{color}}>{totalDays}</span><span className="stat-l">紀錄天數</span></div>
+            <div className="stat-box"><span className="stat-n" style={{color}}>{avgW}</span><span className="stat-l">平均體重kg</span></div>
+            <div className="stat-box"><span className="stat-n" style={{color:issdays>0?"#ef4444":color}}>{issdays}</span><span className="stat-l">問題狀況天</span></div>
+          </div>
+        </div>
+        <div className="an-card">
+          <div className="an-card-title">📈 體重趨勢</div>
+          <WeightChart records={filtered} color={color}/>
+        </div>
+        <div className="an-card">
+          <div className="an-card-title">🐾 行為評估平均</div>
+          {(()=>{
+            const dims = BEHAVIOR_DIMS;
+            return (
+              <div style={{display:"flex",gap:8}}>
+                {dims.map(dim=>{
+                  const vals = filtered.map(r=>r[dim.key]).filter(v=>v>0);
+                  const avg = vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1) : "—";
+                  return (
+                    <div key={dim.key} style={{flex:1,textAlign:"center",padding:"12px 6px",background:`${dim.color}10`,borderRadius:12,border:`1.5px solid ${dim.color}30`}}>
+                      <div style={{fontSize:18,marginBottom:4}}>{dim.icon}</div>
+                      <div style={{fontSize:20,fontWeight:900,color:dim.color}}>{avg}</div>
+                      <div style={{fontSize:10,fontWeight:700,color:"var(--text2)",marginTop:2}}>{dim.label}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
+        </div>
+      </>}
+
+      {!loading && subTab==="weight" && <>
+        <div className="an-card">
+          <div className="an-card-title">📈 體重趨勢折線圖</div>
+          <WeightChart records={filtered} color={color}/>
+        </div>
+        <div className="an-card">
+          <div className="an-card-title">📊 體重統計</div>
+          {wsAll.length ? (()=>{
+            const mn=Math.min(...wsAll),mx=Math.max(...wsAll),avg=wsAll.reduce((a,b)=>a+b,0)/wsAll.length;
+            const trend=wsAll[wsAll.length-1]-wsAll[0];
+            return (<>
+              <div className="stat-row" style={{marginBottom:12}}>
+                <div className="stat-box"><span className="stat-n" style={{color:"#3b82f6"}}>{mn.toFixed(2)}</span><span className="stat-l">最低 kg</span></div>
+                <div className="stat-box"><span className="stat-n" style={{color}}>{avg.toFixed(2)}</span><span className="stat-l">平均 kg</span></div>
+                <div className="stat-box"><span className="stat-n" style={{color:"#f97316"}}>{mx.toFixed(2)}</span><span className="stat-l">最高 kg</span></div>
+              </div>
+              <div style={{textAlign:"center",padding:"6px 0"}}>
+                <span style={{fontSize:14,fontWeight:700,color:"#80aad4"}}>期間變化：</span>
+                <span style={{fontSize:18,fontWeight:900,color:trend>0?"#f97316":trend<0?"#3b82f6":"#80aad4",marginLeft:6}}>{trend>0?"+":""}{trend.toFixed(2)} kg</span>
+              </div>
+            </>);
+          })() : <div className="no-data">尚無體重記錄 ⚖️</div>}
+        </div>
+      </>}
+
+      {!loading && subTab==="food" && <>
+        <div className="an-card"><div className="an-card-title">✅ 濕食吃完率</div><EatenChart records={filtered} color={color}/></div>
+        <div className="an-card"><div className="an-card-title">🏆 最常吃的濕食 Top 6</div><FoodRanking records={filtered} color={color}/></div>
+        <div className="an-card"><div className="an-card-title">😋 吃飯態度分布</div><AttitudeChart records={filtered}/></div>
+      </>}
+
+      {!loading && subTab==="health" && <>
+        <div className="an-card"><div className="an-card-title">✨ 活力狀態分布</div><VitalityDonut records={filtered} color={color}/></div>
+        <div className="an-card"><div className="an-card-title">🚨 問題狀況頻率</div><IssueHeatmap records={filtered} color={color}/></div>
+        <div className="an-card">
+          <div className="an-card-title">📅 問題狀況統計</div>
+          <div className="stat-row">
+            <div className="stat-box"><span className="stat-n" style={{color:issdays/totalDays*100>20?"#ef4444":color}}>{totalDays?Math.round(issdays/totalDays*100):0}%</span><span className="stat-l">問題天佔比</span></div>
+            <div className="stat-box"><span className="stat-n" style={{color:"#22c55e"}}>{totalDays-issdays}</span><span className="stat-l">健康天數</span></div>
+            <div className="stat-box"><span className="stat-n" style={{color:"#ef4444"}}>{issdays}</span><span className="stat-l">問題天數</span></div>
+          </div>
+        </div>
+      </>}
+    </div>
+  );
+}
+
+// ─── Food Picker ──────────────────────────────────────────────────────────────
+function FoodPicker({ type, color, onSelect, onClose }) {
+  const [q, setQ] = React.useState("");
+  const items = FOOD_DB[type]||[];
+  const filtered = items.filter(i=>(i.brand+i.name+(i.meat||"")).toLowerCase().includes(q.toLowerCase()));
+  const labels={wet:"濕食",dry:"飼料",supplement:"保健品",snack:"零食/肉泥"};
+  return (
+    <div className="overlay" onClick={onClose}>
+      <div className="picker-sheet" onClick={e=>e.stopPropagation()}>
+        <div className="picker-handle"/>
+        <div className="picker-head">
+          <span className="picker-title">選擇{labels[type]||"食品"}</span>
+          <button className="picker-close" onClick={onClose}>✕</button>
+        </div>
+        <input className="picker-search" placeholder="🔍 搜尋品牌、名稱…" value={q} onChange={e=>setQ(e.target.value)} autoFocus/>
+        <div className="picker-list">
+          {filtered.map(item=>(
+            <div key={item.id} className="pitem" onClick={()=>onSelect(item)}>
+              <span className="pitem-brand">{item.brand}</span>
+              <span className="pitem-name">{item.name}</span>
+              <div className="pitem-tags">
+                {item.meat&&<span className="pitem-tag">{item.meat}</span>}
+                {item.weight&&<span className="pitem-tag">{item.weight}g</span>}
+                {item.origin&&<span className="pitem-tag">{item.origin}</span>}
+                {item.dosage&&<span className="pitem-tag">{item.dosage}</span>}
+              </div>
+            </div>
+          ))}
+          {!filtered.length&&<div className="empty-hint" style={{paddingTop:24}}>找不到相符食品 🔍</div>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── History Page ─────────────────────────────────────────────────────────────
+function HistoryPage({ cat, catId, color, onClose }) {
+  const [records, setRecords] = React.useState([]);
+  const [expanded, setExpanded] = React.useState(null);
+  React.useEffect(()=>{
+    (async()=>{
+      const all = await loadAllRecords(catId);
+      setRecords([...all].reverse());
+      // Scan ALL possible key prefixes to find lost data
+      try {
+        const prefixes = [
+          "daily:", `daily:${catId}:`,
+          "record:", `record:${catId}:`,
+          "cat:", "data:", "entry:",
+        ];
+        const found = {};
+        for (const prefix of prefixes) {
+          const result = await (async()=>{ const _k=[]; for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k&&k.startsWith(prefix))_k.push(k); } return {keys:_k}; })();
+          if (result?.keys?.length) found[prefix] = result.keys;
+        }
+        console.log("=== STORAGE SCAN RESULT ===");
+        console.log(JSON.stringify(found, null, 2));
+        // Also try listing with empty string to get ALL keys
+        const allResult = await (async()=>{ const _k=[]; for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k)_k.push(k); } return {keys:_k}; })();
+        console.log("=== ALL KEYS ===");
+        console.log(JSON.stringify(allResult?.keys));
+      } catch(e){ console.log("scan error", e); }
+    })();
+  },[catId]);
+  const del=async(date)=>{
+    try{localStorage.removeItem(`daily:${catId}:${date}`);}catch{}
+    setRecords(r=>r.filter(x=>x.date!==date));
+  };
+  return (
+    <div className="hist-page">
+      <div className="hist-header">
+        <button className="hist-back" onClick={onClose}>←</button>
+        <span className="hist-title">{cat.name||catId==="sakura"?"櫻":"樨"} 的所有紀錄</span>
+        <span style={{fontSize:13,fontWeight:700,color:"#80aad4",marginLeft:"auto"}}>{records.length} 筆</span>
+      </div>
+      <div className="hist-list">
+        <div style={{background:"#f0fdf4",border:"1.5px solid #86efac",borderRadius:12,padding:"12px 14px",marginBottom:12}}>
+          <div style={{fontSize:12,fontWeight:800,color:"#166534",marginBottom:4}}>📥 匯入備份資料</div>
+          <div style={{fontSize:11,color:"#16a34a",fontWeight:600,marginBottom:8}}>將備份的 JSON 文字貼入下方，再點「匯入」</div>
+          <textarea
+            id="importText"
+            rows={3}
+            placeholder='貼上備份 JSON 文字… ({"sakura":...})'
+            style={{width:"100%",padding:"8px 10px",border:"1.5px solid #86efac",borderRadius:8,fontSize:12,fontFamily:"monospace",resize:"vertical",marginBottom:8,background:"white"}}
+          />
+          <button onClick={async()=>{
+            const text = document.getElementById("importText").value.trim();
+            if (!text) { alert("請先貼上備份資料"); return; }
+            try {
+              const data = JSON.parse(text);
+              let count = 0;
+              for (const catId of ["sakura","xi"]) {
+                if (!data[catId]) continue;
+                if (data[catId].profile) await setStorage(`cat:${catId}`, data[catId].profile);
+                const records = data[catId].records || {};
+                for (const [date, rec] of Object.entries(records)) {
+                  await setStorage(`daily:${catId}:${date}`, rec);
+                  count++;
+                }
+              }
+              document.getElementById("importText").value = "";
+              alert(`✅ 匯入完成！共還原 ${count} 筆紀錄。\n請關閉此頁面再重新開啟「所有紀錄」。`);
+            } catch(err) {
+              alert("❌ 匯入失敗，請確認是正確的備份資料。\n錯誤：" + err.message);
+            }
+          }} style={{padding:"8px 16px",background:"#16a34a",color:"white",border:"none",borderRadius:8,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"var(--font)"}}>
+            匯入
+          </button>
+        </div>
+        {!records.length&&<div className="empty-hint" style={{paddingTop:40,fontSize:15}}>還沒有任何紀錄 🐾</div>}
+        {records.map(r=>(
+          <div key={r.date} className="hcard">
+            <div className="hrow" onClick={()=>setExpanded(expanded===r.date?null:r.date)}>
+              <span className="hdate">{r.date}</span>
+              {r.vitality&&<span style={{fontSize:18}}>{r.vitality}</span>}
+              {r.weight&&<span className="htag">{r.weight}kg</span>}
+              {r.wets?.[0]?.food&&<span className="htag" style={{background:`${color}18`,color}}>{r.wets[0].food.slice(0,6)}</span>}
+              {r.wets?.[0]?.eaten==="✓"&&<span style={{fontSize:13,color:"#16a34a",fontWeight:900}}>✓</span>}
+              {r.wets?.[0]?.eaten==="✕"&&<span style={{fontSize:13,color:"#dc2626",fontWeight:900}}>✕</span>}
+              {(r.wets?.[0]?.eaten==="⅓"||r.wets?.[0]?.eaten==="½"||r.wets?.[0]?.eaten==="⅔")&&<span style={{fontSize:13,color:"#d97706",fontWeight:900}}>{r.wets[0].eaten}</span>}
+              {r.issues?.length>0&&<span>🚨</span>}
+              <span style={{color:"#80aad4",fontSize:12,fontWeight:700}}>{expanded===r.date?"▲":"▼"}</span>
+            </div>
+            {expanded===r.date&&(
+              <div className="hexpand">
+                {r.weight&&<div className="hexp-row"><span className="hexp-k">體重</span><span>{r.weight} kg</span></div>}
+                {(r.activity||r.reactivity||r.emotion)&&<div className="hexp-row"><span className="hexp-k">行為評估</span><span>{[r.activity&&`活動 ${r.activity}`,r.reactivity&&`反應 ${r.reactivity}`,r.emotion&&`情緒 ${r.emotion}`].filter(Boolean).join(" · ")}</span></div>}
+                {r.wets?.length>0&&<div className="hexp-row"><span className="hexp-k">濕食</span><span>{r.wets.map(w=>`${w.food}${w.weight?` ${w.weight}g`:""}${w.texture?` · ${w.texture}`:""}${w.eaten?` · ${w.eaten}`:""}`).join("；")}</span></div>}
+                {r.drys?.length>0&&<div className="hexp-row"><span className="hexp-k">飼料</span><span>{r.drys.map(d=>d.food).join("、")}</span></div>}
+                {r.training?.length>0&&<div className="hexp-row"><span className="hexp-k">訓練</span><span>{r.training.map(t=>{const item=TRAINING_ITEMS.find(x=>x.id===t.id);return `${item?.icon||""}${item?.label||t.id}${t.status?` (${t.status})`:""} ${t.note?`— ${t.note}`:""}`}).join("、")}</span></div>}
+                {r.playSession?.played&&<div className="hexp-row"><span className="hexp-k">陪玩</span><span>{r.playSession.duration?`${r.playSession.duration}分鐘`:""}{r.playSession.toys?.length?` · ${r.playSession.toys.join("、")}`:""}</span></div>}
+                {r.outing?.wentOut&&<div className="hexp-row"><span className="hexp-k">外出</span><span>{r.outing.duration?`${r.outing.duration}分鐘`:""}{r.outing.destination?` · ${r.outing.destination}`:""}</span></div>}
+                {r.outing?.wentOut&&<div className="hexp-row"><span className="hexp-k">外出</span><span>{r.outing.duration?`${r.outing.duration}分鐘`:""}{r.outing.destination?` · ${r.outing.destination}`:""}</span></div>}
+                {r.supplements?.length>0&&<div className="hexp-row"><span className="hexp-k">保健品</span><span>{r.supplements.map(s=>s.name).join("、")}</span></div>}
+                {r.snacks?.length>0&&<div className="hexp-row"><span className="hexp-k">零食</span><span>{r.snacks.map(s=>s.type).join("、")}</span></div>}
+                {r.issues?.length>0&&<div className="hexp-row"><span className="hexp-k" style={{color:"#dc2626"}}>問題</span><span style={{color:"#dc2626"}}>{r.issues.map(v=>{const c=r.issueCounts?.[v];return c&&c>1?`${v}×${c}`:v;}).join("、")}</span></div>}
+                {r.vomitDetail&&(r.vomitDetail.content?.length>0||r.vomitDetail.color?.length>0||r.vomitDetail.form)&&(
+                  <div className="hexp-row"><span className="hexp-k" style={{color:"#dc2626"}}>嘔吐</span><span style={{color:"#dc2626"}}>{[r.vomitDetail.content?.join("、"),r.vomitDetail.color?.join("、"),r.vomitDetail.form].filter(Boolean).join(" · ")}</span></div>
+                )}
+                {r.breathRate&&<div className="hexp-row"><span className="hexp-k" style={{color:"#dc2626"}}>呼吸</span><span style={{color:"#dc2626"}}>{r.breathRate} 次/分鐘</span></div>}
+                {r.toiletCryTiming?.length>0&&<div className="hexp-row"><span className="hexp-k" style={{color:"#d97706"}}>叫聲</span><span style={{color:"#d97706"}}>上廁所時會叫 · {r.toiletCryTiming.join("、")}</span></div>}
+                {r.issueLinks?.length>0&&<div className="hexp-row"><span className="hexp-k">媒體</span><span>{r.issueLinks.map((lk,i)=>(
+                  <span key={i} style={{marginRight:8}}>{lk.label} <a href={lk.url} target="_blank" rel="noreferrer" style={{color:"var(--accent)"}}>{lk.url.slice(0,28)}{lk.url.length>28?"…":""}</a></span>
+                ))}</span></div>}
+                {r.note&&<div className="hexp-row"><span className="hexp-k">備註</span><span>{r.note}</span></div>}
+                {r.meds?.length>0&&<div className="hexp-row"><span className="hexp-k" style={{color:"#065f46"}}>用藥</span><span style={{color:"#065f46"}}>{r.meds.map(m=>`${m.name}${m.dose?` ${m.dose}${m.unit}`:""}${m.given?" ✓":" —"}`).join("、")}</span></div>}
+                {r.vetVisits?.length>0&&<div className="hexp-row"><span className="hexp-k" style={{color:"#1d4ed8"}}>就醫</span><span style={{color:"#1d4ed8"}}>{r.vetVisits.map(v=>[v.clinic,v.reason,v.diagnosis].filter(Boolean).join(" · ")).join("；")}</span></div>}
+                <button className="hdel-btn" onClick={()=>del(r.date)}>刪除此筆</button>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Backup helpers ───────────────────────────────────────────────────────────
+const collectAllData = async () => {
+  const all = {};
+  for (const c of [{id:"sakura"},{id:"xi"}]) {
+    const catMeta = await getStorage(`cat:${c.id}`);
+    const keys = await (async()=>{ const _p=`daily:${c.id}:`; const _k=[]; for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k&&k.startsWith(_p))_k.push(k); } return {keys:_k}; })();
+    const records = {};
+    for (const k of (keys?.keys||[])) {
+      const v = await getStorage(k);
+      if (v) records[k.replace(`daily:${c.id}:`,"")] = v;
+    }
+    all[c.id] = { profile: catMeta, records };
+  }
+  return all;
+};
+
+const downloadJSON = async () => {
+  const all = await collectAllData();
+  const json = JSON.stringify(all, null, 2);
+  await setStorage("backup:lastExport", todayStr());
+
+  const overlay = document.createElement("div");
+  overlay.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;flex-direction:column;padding:16px;gap:10px;";
+  const title = document.createElement("div");
+  title.style.cssText = "color:white;font-size:15px;font-weight:800;font-family:sans-serif;";
+  title.textContent = "📋 請全選並複製以下資料，儲存到備忘錄或文字檔";
+  const ta = document.createElement("textarea");
+  ta.value = json;
+  ta.style.cssText = "flex:1;border-radius:12px;border:none;font-size:11px;padding:12px;font-family:monospace;resize:none;";
+  ta.readOnly = true;
+  const btnRow = document.createElement("div");
+  btnRow.style.cssText = "display:flex;gap:10px;";
+  const copyBtn = document.createElement("button");
+  copyBtn.textContent = "📋 全選複製";
+  copyBtn.style.cssText = "flex:2;padding:13px;background:#3a6fa8;color:white;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:sans-serif;";
+  copyBtn.onclick = async () => {
+    ta.select();
+    try { await navigator.clipboard.writeText(json); } catch { document.execCommand("copy"); }
+    copyBtn.textContent = "✅ 已複製！";
+  };
+  const closeBtn = document.createElement("button");
+  closeBtn.textContent = "關閉";
+  closeBtn.style.cssText = "flex:1;padding:13px;background:rgba(255,255,255,0.2);color:white;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:sans-serif;";
+  closeBtn.onclick = () => document.body.removeChild(overlay);
+  btnRow.appendChild(copyBtn);
+  btnRow.appendChild(closeBtn);
+  overlay.appendChild(title);
+  overlay.appendChild(ta);
+  overlay.appendChild(btnRow);
+  document.body.appendChild(overlay);
+  setTimeout(() => { ta.focus(); ta.select(); }, 100);
+};
+
+// ─── Cat Tab ──────────────────────────────────────────────────────────────────
+function CatTab({ meta }) {
+  const { id:catId, color, colorLight, colorMid, grad, profileGrad } = meta;
+  const [cat, setCat] = React.useState({name:"",birthday:""});
+  const [date, setDate] = React.useState(todayStr);
+  const [daily, setDaily] = React.useState(emptyDaily());
+  const [saved, setSaved] = React.useState(false);
+  const [picker, setPicker] = React.useState(null);
+  const [showHist, setShowHist] = React.useState(false);
+  const [prevWeight, setPrevWeight] = React.useState(null);
+  const [view, setView] = React.useState("record");
+  const [dirty, setDirty] = React.useState(false);
+  const [showToast, setShowToast] = React.useState(false);
+
+  React.useEffect(()=>{
+    (async()=>{const c=await getStorage(`cat:${catId}`);if(c)setCat(c);})();
+  },[catId]);
+
+  React.useEffect(()=>{
+    (async()=>{
+      const d=await getStorage(`daily:${catId}:${date}`);
+      setDaily(d||emptyDaily());
+      setDirty(false);
+      const allKeys=await (async()=>{ const _p=`daily:${catId}:`; const _k=[]; for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k&&k.startsWith(_p))_k.push(k); } return {keys:_k}; })();
+      const sorted=(allKeys?.keys||[]).filter(k=>k<`daily:${catId}:${date}`).sort().reverse();
+      let pw=null;
+      for(const k of sorted){const v=await getStorage(k);if(v?.weight){pw=v.weight;break;}}
+      setPrevWeight(pw);
+    })();
+  },[catId,date]);
+
+  const save=async()=>{
+    await setStorage(`daily:${catId}:${date}`,daily);
+    await setStorage(`cat:${catId}`,cat);
+    setSaved(true); setDirty(false);
+    // 自動備份在背景執行，不阻塞 UI
+    setTimeout(()=>{
+      collectAllData().then(all=>{
+        setStorage("backup:auto", JSON.stringify(all));
+        setStorage("backup:autoDate", todayStr());
+      });
+    }, 0);
+    setShowToast(true);
+    setTimeout(()=>setShowToast(false), 1000);
+    setTimeout(()=>setSaved(false), 2200);
+  };
+
+  const exportData = async () => {
+    const all = await collectAllData();
+    const json = JSON.stringify(all, null, 2);
+    await setStorage("backup:lastExport", todayStr());
+
+    // Create overlay modal with copyable text
+    const overlay = document.createElement("div");
+    overlay.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;flex-direction:column;padding:16px;gap:10px;";
+
+    const title = document.createElement("div");
+    title.style.cssText = "color:white;font-size:15px;font-weight:800;font-family:sans-serif;";
+    title.textContent = "📋 請全選並複製以下資料，儲存到備忘錄或文字檔";
+
+    const ta = document.createElement("textarea");
+    ta.value = json;
+    ta.style.cssText = "flex:1;border-radius:12px;border:none;font-size:11px;padding:12px;font-family:monospace;resize:none;";
+    ta.readOnly = true;
+
+    const btnRow = document.createElement("div");
+    btnRow.style.cssText = "display:flex;gap:10px;";
+
+    const copyBtn = document.createElement("button");
+    copyBtn.textContent = "📋 全選複製";
+    copyBtn.style.cssText = "flex:2;padding:13px;background:#3a6fa8;color:white;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:sans-serif;";
+    copyBtn.onclick = async () => {
+      ta.select();
+      try {
+        await navigator.clipboard.writeText(json);
+        copyBtn.textContent = "✅ 已複製！";
+      } catch {
+        document.execCommand("copy");
+        copyBtn.textContent = "✅ 已複製！";
+      }
+    };
+
+    const closeBtn = document.createElement("button");
+    closeBtn.textContent = "關閉";
+    closeBtn.style.cssText = "flex:1;padding:13px;background:rgba(255,255,255,0.2);color:white;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:sans-serif;";
+    closeBtn.onclick = () => document.body.removeChild(overlay);
+
+    btnRow.appendChild(copyBtn);
+    btnRow.appendChild(closeBtn);
+    overlay.appendChild(title);
+    overlay.appendChild(ta);
+    overlay.appendChild(btnRow);
+    document.body.appendChild(overlay);
+
+    // Auto select all
+    setTimeout(() => { ta.focus(); ta.select(); }, 100);
+  };
+  const up=(path,val)=>{
+    setDirty(true);
+    setDaily(p=>{
+      const n=JSON.parse(JSON.stringify(p));
+      const parts=path.split(".");let c=n;
+      for(let i=0;i<parts.length-1;i++)c=c[parts[i]];
+      c[parts[parts.length-1]]=val;return n;
+    });
+  };
+  const add=(k,o)=>{ setDirty(true); setDaily(p=>({...p,[k]:[...(p[k]||[]),o]})); };
+  const rem=(k,i)=>{ setDirty(true); setDaily(p=>({...p,[k]:p[k].filter((_,j)=>j!==i)})); };
+  const upItem=(k,i,f,v)=>{ setDirty(true); setDaily(p=>({...p,[k]:p[k].map((x,j)=>j===i?{...x,[f]:v}:x)})); };
+  const togIss=(v)=>{ setDirty(true); setDaily(p=>({...p,issues:p.issues.includes(v)?p.issues.filter(x=>x!==v):[...p.issues,v]})); };
+  const diff=daily.weight&&prevWeight?(parseFloat(daily.weight)-parseFloat(prevWeight)).toFixed(1):null;
+
+  if(showHist) return <HistoryPage cat={cat} catId={catId} color={color} onClose={()=>setShowHist(false)}/>;
+
+  // icon bg helper
+  const iconBg = (clr) => ({ background:`${clr}18` });
+
+  return (
+    <>
+      {showToast && (
+        <>
+          <div className="toast-overlay"/>
+          <div className="save-toast">
+            <div className="save-toast-icon">✅</div>
+            <div className="save-toast-title">已完成紀錄！</div>
+            <div className="save-toast-sub">{date}</div>
+          </div>
+        </>
+      )}
+      {picker&&<FoodPicker type={picker.type} color={color} onClose={()=>setPicker(null)} onSelect={item=>{
+        const t=picker.type;
+        if(t==="wet") add("wets",{...emptyWet(), food:item.brand+" "+item.name, ingredients:item.meat||"", weight:item.weight||"", origin:item.origin||""});
+        else if(t==="dry") add("drys",{...emptyDry(), food:item.brand+" "+item.name, ingredients:item.meat||"", origin:item.origin||""});
+        else if(t==="supplement") add("supplements",{name:item.brand+" "+item.name,dose:item.dosage||"",note:item.note||""});
+        else if(t==="snack") add("snacks",{type:item.brand+" "+item.name,ingredients:item.meat||"",amount:item.weight?`${item.weight}g`:""});
+        setPicker(null);
+      }}/>}
+
+      {/* Profile */}
+      <div className="profile-card">
+        <div className="profile-banner" style={{background: "transparent"}}>
+          <div className="profile-cat-icon">
+            <CatIcon catId={catId} size={34} color="white" />
+          </div>
+          <div className="profile-info">
+            <div className="profile-name-row">
+              <input
+                className="cat-name-inp"
+                value={cat.name}
+                onChange={e=>{ setCat(c=>({...c,name:e.target.value})); setDirty(true); }}
+                placeholder="輸入名字"
+                size={Math.max(cat.name.length, 4)}
+              />
+            </div>
+            <div className="profile-meta">
+              <input type="date" className="bday-inp" value={cat.birthday}
+                onChange={e=>{ setCat(c=>({...c,birthday:e.target.value})); setDirty(true); }}/>
+              {cat.birthday && <span className="age-badge" style={{background:`${color}18`, color}}>{calcAge(cat.birthday)}</span>}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* View toggle */}
+      <div className="view-tabs">
+        <button className={`view-tab${view==="record"?" active":""}`}
+          style={view==="record" ? {background:color, boxShadow:`0 4px 12px ${color}55`} : {}}
+          onClick={()=>setView("record")}>每日紀錄</button>
+        <button className={`view-tab${view==="analytics"?" active":""}`}
+          style={view==="analytics" ? {background:color, boxShadow:`0 4px 12px ${color}55`} : {}}
+          onClick={()=>setView("analytics")}>數據分析</button>
+      </div>
+
+      {/* Analytics */}
+      {view==="analytics"&&<AnalyticsPage catId={catId} color={color}/>}
+
+      {/* Record */}
+      {view==="record"&&(
+        <div className="page">
+          {/* Date nav */}
+          <div className="date-nav">
+            <button className="dnav-btn" onClick={()=>{const d=new Date(date);d.setDate(d.getDate()-1);setDate(d.toISOString().slice(0,10));}}>‹</button>
+            <input type="date" className="dnav-inp" value={date} onChange={e=>setDate(e.target.value)}/>
+            <button className="dnav-btn" onClick={()=>{const d=new Date(date);d.setDate(d.getDate()+1);setDate(d.toISOString().slice(0,10));}}>›</button>
+            <button className="today-btn" onClick={()=>setDate(todayStr())}>今天</button>
+          </div>
+
+          {/* Weight & Behavior */}
+          <div className="card">
+            <div className="card-head">
+              <div className="card-title">
+                <div className="card-icon" style={iconBg(color)}>⚖️</div>
+                體重 &amp; 行為評估
+              </div>
+            </div>
+            <div className="card-body">
+              <div className="field-group">
+                <span className="field-label">今日體重</span>
+                <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                  <div className="wt-wrap">
+                    <input type="number" step="0.1" className="inp wt-inp" value={daily.weight}
+                      onChange={e=>up("weight",e.target.value)} placeholder="4.2"/>
+                    <span className="wt-unit">kg</span>
+                  </div>
+                  {diff!==null&&<span className={`diff-pill ${diff>0?"diff-up":diff<0?"diff-dn":"diff-eq"}`}>{diff>0?"+":""}{diff} kg</span>}
+                </div>
+              </div>
+              <div className="divider"/>
+              {BEHAVIOR_DIMS.map(dim=>(
+                <div key={dim.key} className="behavior-dim">
+                  <div className="behavior-dim-head">
+                    <div className="behavior-dim-icon" style={{background:`${dim.color}18`}}>{dim.icon}</div>
+                    <div style={{flex:1}}>
+                      <span className="behavior-dim-title">{dim.label}</span>
+                      <span className="behavior-dim-desc">{dim.desc}</span>
+                    </div>
+                    {daily[dim.key]>0 && (
+                      <span className="behavior-score-val" style={{color:dim.color}}>{daily[dim.key]}</span>
+                    )}
+                  </div>
+                  <div className="behavior-score-row">
+                    {dim.levels.map(lv=>{
+                      const active = daily[dim.key]===lv.n;
+                      return (
+                        <button key={lv.n}
+                          className={`behavior-score-btn${active?" bsa":""}`}
+                          style={active?{background:`${dim.color}15`,borderColor:dim.color}:{}}
+                          onClick={()=>up(dim.key, daily[dim.key]===lv.n ? 0 : lv.n)}>
+                          <span className="bsn" style={active?{color:dim.color}:{}}>{lv.n}</span>
+                          <span className="bsl" style={active?{color:dim.color}:{}}>{lv.label}</span>
+                          {lv.sub && <span className="bss">{lv.sub}</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Wet food */}
+          <div className="card">
+            <div className="card-head">
+              <div className="card-title"><div className="card-icon" style={iconBg("#06b6d4")}>🐟</div>濕食</div>
+              <div className="add-row">
+                <button className="add-btn add-p" style={{borderColor:color,color}} onClick={()=>setPicker({type:"wet"})}>＋ 食品庫</button>
+                <button className="add-btn add-s" onClick={()=>add("wets",emptyWet())}>＋ 手動</button>
+              </div>
+            </div>
+            <div className="card-body">
+              {!(daily.wets||[]).length && <div className="empty-hint">尚未記錄</div>}
+              {(daily.wets||[]).map((w,i)=>(
+                <div key={i} className="sub-item">
+                  <div className="sub-row">
+                    <input className="inp" style={{flex:1}} value={w.food} onChange={e=>upItem("wets",i,"food",e.target.value)} placeholder="食品名稱"/>
+                    <button className="del-btn" onClick={()=>rem("wets",i)}>✕</button>
+                  </div>
+                  <div className="row field-group">
+                    <div style={{flex:1}}>
+                      <span className="field-label">份量</span>
+                      <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap",marginBottom:4}}>
+                        {["½罐","整罐"].map(q=>(
+                          <button key={q}
+                            onClick={()=>upItem("wets",i,"portion",w.portion===q?"":q)}
+                            style={{
+                              padding:"5px 12px",borderRadius:50,fontSize:12,fontWeight:700,
+                              border:`1.5px solid ${w.portion===q?color:"rgba(41,128,212,0.18)"}`,
+                              background:w.portion===q?`${color}15`:"white",
+                              color:w.portion===q?color:"var(--text2)",
+                              cursor:"pointer",fontFamily:"var(--font)",transition:"all .15s",flexShrink:0
+                            }}>{q}</button>
+                        ))}
+                      </div>
+                      <div className="wt-wrap"><input type="number" className="inp wt-inp" value={w.weight} onChange={e=>upItem("wets",i,"weight",e.target.value)} placeholder="80"/><span className="wt-unit">g</span></div>
+                    </div>
+                    <div style={{width:88}}>
+                      <span className="field-label">產地</span>
+                      <input className="inp" value={w.origin} onChange={e=>upItem("wets",i,"origin",e.target.value)} placeholder="泰國"/>
+                    </div>
+                  </div>
+                  <div className="field-group">
+                    <span className="field-label">成分</span>
+                    <textarea className="inp" value={w.ingredients} onChange={e=>upItem("wets",i,"ingredients",e.target.value)} rows={2} placeholder="成分內容…"/>
+                  </div>
+                  <div className="divider"/>
+                  <div className="field-group">
+                    <span className="field-label">食物質地</span>
+                    <div className="texture-grid">
+                      {TEXTURES.map(t=>(
+                        <button key={t.v} className={`tex-btn${w.texture===t.v?" ta":""}`}
+                          style={w.texture===t.v?{background:`${color}12`,borderColor:color}:{}}
+                          onClick={()=>upItem("wets",i,"texture",w.texture===t.v?"":t.v)}>
+                          <span className="ti">{t.icon}</span>
+                          <span className="tl" style={w.texture===t.v?{color}:{}}>{t.v}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="divider"/>
+                  <div className="field-group">
+                    <span className="field-label">吃的狀況</span>
+                    <div className="eat-row">
+                      {[{v:"✓",l:"吃完",c:"ea-done"},{v:"⅓",l:"吃 1/3",c:"ea-third"},{v:"½",l:"吃一半",c:"ea-half"}].map(o=>(
+                        <button key={o.v} className={`eat-btn${w.eaten===o.v?" "+o.c:""}`}
+                          onClick={()=>upItem("wets",i,"eaten",w.eaten===o.v?"":o.v)}>{o.v} {o.l}</button>
+                      ))}
+                    </div>
+                    <div className="eat-row-2">
+                      {[{v:"⅔",l:"吃 2/3",c:"ea-two3"},{v:"✕",l:"沒吃",c:"ea-skip"}].map(o=>(
+                        <button key={o.v} className={`eat-btn${w.eaten===o.v?" "+o.c:""}`}
+                          onClick={()=>upItem("wets",i,"eaten",w.eaten===o.v?"":o.v)}>{o.v} {o.l}</button>
+                      ))}
+                    </div>
+                  </div>
+                  {(w.eaten && w.eaten!=="✕") && (
+                    <div className="field-group">
+                      <span className="field-label">吃飯態度</span>
+                      <div className="chips">
+                        {[{v:"😍",l:"吃愛"},{v:"⚡",l:"馬上吃"},{v:"🐢",l:"等很久才吃"}].map(o=>(
+                          <button key={o.v} className={`chip${w.attitude===o.v?" ac":""}`}
+                            style={w.attitude===o.v?{borderColor:color,background:`${color}12`,color}:{}}
+                            onClick={()=>upItem("wets",i,"attitude",w.attitude===o.v?"":o.v)}>{o.v} {o.l}</button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <div>
+                    <span className="field-label">備註</span>
+                    <textarea className="inp" value={w.note||""} onChange={e=>upItem("wets",i,"note",e.target.value)} rows={2} placeholder="例：今天比較挑食、換新口味…"/>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Dry food */}
+          <div className="card">
+            <div className="card-head">
+              <div className="card-title"><div className="card-icon" style={iconBg("#f59e0b")}>🌾</div>飼料</div>
+              <div className="add-row">
+                <button className="add-btn add-p" style={{borderColor:color,color}} onClick={()=>setPicker({type:"dry"})}>＋ 食品庫</button>
+                <button className="add-btn add-s" onClick={()=>add("drys",emptyDry())}>＋ 手動</button>
+              </div>
+            </div>
+            <div className="card-body">
+              {!(daily.drys||[]).length && <div className="empty-hint">尚未記錄</div>}
+              {(daily.drys||[]).map((d,i)=>(
+                <div key={i} className="sub-item">
+                  <div className="sub-row">
+                    <input className="inp" style={{flex:1}} value={d.food} onChange={e=>upItem("drys",i,"food",e.target.value)} placeholder="食品名稱"/>
+                    <input className="inp" style={{width:88}} value={d.origin} onChange={e=>upItem("drys",i,"origin",e.target.value)} placeholder="產地"/>
+                    <button className="del-btn" onClick={()=>rem("drys",i)}>✕</button>
+                  </div>
+                  <textarea className="inp" value={d.ingredients} onChange={e=>upItem("drys",i,"ingredients",e.target.value)} rows={2} placeholder="成分內容…"/>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Supplements */}
+          <div className="card">
+            <div className="card-head">
+              <div className="card-title"><div className="card-icon" style={iconBg("#8b5cf6")}>💊</div>保健品</div>
+              <div className="add-row">
+                <button className="add-btn add-p" style={{borderColor:color,color}} onClick={()=>setPicker({type:"supplement"})}>＋ 資料庫</button>
+                <button className="add-btn add-s" onClick={()=>add("supplements",{name:"",dose:"",note:""})}>＋ 手動</button>
+              </div>
+            </div>
+            <div className="card-body">
+              {!(daily.supplements||[]).length&&<div className="empty-hint">尚未記錄</div>}
+              {(daily.supplements||[]).map((s,i)=>(
+                <div key={i} className="sub-item">
+                  <div className="sub-row">
+                    <input className="inp" style={{flex:1}} value={s.name} onChange={e=>upItem("supplements",i,"name",e.target.value)} placeholder="保健品名稱"/>
+                    <input className="inp" style={{width:84}} value={s.dose} onChange={e=>upItem("supplements",i,"dose",e.target.value)} placeholder="劑量"/>
+                    <button className="del-btn" onClick={()=>rem("supplements",i)}>✕</button>
+                  </div>
+                  <input className="inp" value={s.note} onChange={e=>upItem("supplements",i,"note",e.target.value)} placeholder="備註"/>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Snacks */}
+          <div className="card">
+            <div className="card-head">
+              <div className="card-title"><div className="card-icon" style={iconBg("#ec4899")}>🍡</div>零食 / 肉泥</div>
+              <div className="add-row">
+                <button className="add-btn add-p" style={{borderColor:color,color}} onClick={()=>setPicker({type:"snack"})}>＋ 資料庫</button>
+                <button className="add-btn add-s" onClick={()=>add("snacks",{type:"",ingredients:"",amount:""})}>＋ 手動</button>
+              </div>
+            </div>
+            <div className="card-body">
+              {!(daily.snacks||[]).length&&<div className="empty-hint">尚未記錄</div>}
+              {(daily.snacks||[]).map((s,i)=>(
+                <div key={i} className="sub-item">
+                  <div className="sub-row">
+                    <input className="inp" style={{flex:1}} value={s.type} onChange={e=>upItem("snacks",i,"type",e.target.value)} placeholder="零食種類"/>
+                    <button className="del-btn" onClick={()=>rem("snacks",i)}>✕</button>
+                  </div>
+                  <div style={{marginBottom:8}}>
+                    <span className="field-label">份量</span>
+                    <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
+                      {["½條","1條"].map(q=>(
+                        <button key={q}
+                          onClick={()=>upItem("snacks",i,"amount",s.amount===q?"":q)}
+                          style={{
+                            padding:"6px 14px", borderRadius:50, fontSize:12, fontWeight:700,
+                            border:`1.5px solid ${s.amount===q?color:"rgba(41,128,212,0.18)"}`,
+                            background: s.amount===q?`${color}15`:"white",
+                            color: s.amount===q?color:"var(--text2)",
+                            cursor:"pointer", fontFamily:"var(--font)", transition:"all .15s"
+                          }}>{q}</button>
+                      ))}
+                      <input className="inp" value={["½條","1條"].includes(s.amount)?"":s.amount}
+                        onChange={e=>upItem("snacks",i,"amount",e.target.value)}
+                        placeholder="其他份量"
+                        style={{flex:1,minWidth:80}}/>
+                    </div>
+                  </div>
+                  <input className="inp" value={s.ingredients} onChange={e=>upItem("snacks",i,"ingredients",e.target.value)} placeholder="成分"/>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Dewormers */}
+          <div className="card">
+            <div className="card-head">
+              <div className="card-title"><div className="card-icon" style={iconBg("#10b981")}>💉</div>驅蟲藥</div>
+              <button className="add-btn add-s" onClick={()=>add("dewormers",{name:"",method:"",type:"",note:""})}>＋ 新增</button>
+            </div>
+            <div className="card-body">
+              {!(daily.dewormers||[]).length&&<div className="empty-hint">尚未記錄</div>}
+              {(daily.dewormers||[]).map((d,i)=>(
+                <div key={i} className="sub-item">
+                  <div className="sub-row">
+                    <select className="inp" style={{flex:1}} value={d.name} onChange={e=>upItem("dewormers",i,"name",e.target.value)}>
+                      <option value="">選擇藥品…</option>
+                      {FOOD_DB.dewormer.map(p=><option key={p.id} value={p.brand+" "+p.name}>{p.brand} {p.name}</option>)}
+                      <option value="__custom__">手動輸入</option>
+                    </select>
+                    <button className="del-btn" onClick={()=>rem("dewormers",i)}>✕</button>
+                  </div>
+                  {d.name==="__custom__"&&<input className="inp" style={{marginBottom:8}} placeholder="藥品名稱" value={d.customName||""} onChange={e=>upItem("dewormers",i,"customName",e.target.value)}/>}
+                  <div style={{marginTop:8}}>
+                    <span className="field-label">施用方式</span>
+                    <div className="chips" style={{marginBottom:8}}>
+                      {["💊 口服錠劑","💧 體外滴劑","其他"].map(o=>(
+                        <button key={o} className={`chip chip-sm${d.method===o?" ac":""}`}
+                          style={d.method===o?{borderColor:color,background:`${color}12`,color}:{}}
+                          onClick={()=>upItem("dewormers",i,"method",d.method===o?"":o)}>{o}</button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="row">
+                    <div style={{flex:1}}>
+                      <span className="field-label">類型</span>
+                      <select className="inp" value={d.type} onChange={e=>upItem("dewormers",i,"type",e.target.value)}>
+                        <option value="">選擇類型</option>
+                        <option>體內驅蟲</option><option>體外驅蟲</option><option>體內+體外</option>
+                      </select>
+                    </div>
+                    <div style={{flex:1}}>
+                      <span className="field-label">備註</span>
+                      <input className="inp" value={d.note} onChange={e=>upItem("dewormers",i,"note",e.target.value)} placeholder="備註"/>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Issues */}
+          <div className="card">
+            <div className="card-head">
+              <div className="card-title"><div className="card-icon" style={iconBg("#ef4444")}>⚠️</div>問題狀況</div>
+              {daily.issues?.length>0&&<span style={{fontSize:12,fontWeight:800,color:"#dc2626",background:"#fef2f2",padding:"4px 12px",borderRadius:50}}>{daily.issues.length} 項</span>}
+            </div>
+            <div className="card-body">
+              {ISSUES.map(g=>(
+                <div key={g.g} className="iss-grp">
+                  <div className="iss-grp-lbl"><span>{g.icon}</span>{g.g}</div>
+                  <div className="chips">
+                    {g.items.map(it=>{
+                      const active = daily.issues?.includes(it.v);
+                      const count = daily.issueCounts?.[it.v] || 1;
+                      return (
+                        <span key={it.v} style={{display:"inline-flex",alignItems:"center",gap:0}}>
+                          <button
+                            className={`issue-chip${active?" ia":""}`}
+                            onClick={()=>togIss(it.v)}>
+                            {it.v}
+                          </button>
+                          {active && it.countable && (
+                            <span className="issue-count-wrap">
+                              <button className="issue-count-btn minus"
+                                onClick={e=>{ e.stopPropagation(); setDirty(true); setDaily(p=>({...p,issueCounts:{...p.issueCounts,[it.v]:Math.max(1,((p.issueCounts||{})[it.v]||1)-1)}})); }}>−</button>
+                              <span className="issue-count-val">{count}</span>
+                              <button className="issue-count-btn plus"
+                                onClick={e=>{ e.stopPropagation(); setDirty(true); setDaily(p=>({...p,issueCounts:{...p.issueCounts,[it.v]:((p.issueCounts||{})[it.v]||1)+1}})); }}>＋</button>
+                              <span style={{fontSize:11,fontWeight:700,color:"#b91c1c"}}>次</span>
+                            </span>
+                          )}
+                          {active && it.breathable && (
+                            <span className="breath-rate-wrap">
+                              <input
+                                type="number"
+                                className="breath-rate-inp"
+                                value={daily.breathRate||""}
+                                onChange={e=>up("breathRate",e.target.value)}
+                                placeholder="—"
+                                min="0" max="999"
+                              />
+                              <span className="breath-rate-unit">次/分鐘</span>
+                            </span>
+                          )}
+                        </span>
+                      );
+                    })}
+                  </div>
+                  {/* toilet cry timing panel */}
+                  {g.items.some(it=>it.toiletCry&&daily.issues?.includes("🔔 上廁所時會叫")) && (
+                    <div style={{marginTop:8,padding:"10px 12px",background:"#fef9c3",border:"1.5px solid #fde047",borderRadius:12}}>
+                      <div style={{fontSize:11,fontWeight:800,color:"#854d0e",letterSpacing:".4px",textTransform:"uppercase",marginBottom:6}}>🔔 叫聲時機（可複選）</div>
+                      <div className="chips">
+                        {["上廁所前","進行時","結束後"].map(t=>{
+                          const active=(daily.toiletCryTiming||[]).includes(t);
+                          return (
+                            <button key={t}
+                              style={{
+                                padding:"5px 13px",borderRadius:50,fontSize:12,fontWeight:700,cursor:"pointer",
+                                border:`1.5px solid ${active?"#d97706":"#fde047"}`,
+                                background:active?"#d97706":"white",
+                                color:active?"white":"#854d0e",
+                                fontFamily:"var(--font)",transition:"all .13s"
+                              }}
+                              onClick={()=>{
+                                setDirty(true);
+                                setDaily(p=>({...p,toiletCryTiming:active
+                                  ?(p.toiletCryTiming||[]).filter(x=>x!==t)
+                                  :[...(p.toiletCryTiming||[]),t]
+                                }));
+                              }}>{t}</button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                  {/* vomit detail panel — rendered outside chips row */}
+                  {g.items.some(it=>it.v==="🤮 嘔吐"&&daily.issues?.includes("🤮 嘔吐")) && (
+                    <div className="vomit-panel">
+                      <div className="vomit-panel-title">🤮 嘔吐詳情</div>
+                      <div className="vomit-section">
+                        <span className="vomit-section-lbl">內容物（可複選）</span>
+                        <div className="chips">
+                          {VOMIT_CONTENT.map(c=>{
+                            const active=(daily.vomitDetail?.content||[]).includes(c);
+                            return <button key={c} className={`vchip${active?" va":""}`}
+                              onClick={()=>{setDirty(true);setDaily(p=>({...p,vomitDetail:{...p.vomitDetail,content:active?p.vomitDetail.content.filter(x=>x!==c):[...(p.vomitDetail?.content||[]),c]}}));}}>{c}</button>;
+                          })}
+                        </div>
+                      </div>
+                      <div className="vomit-section">
+                        <span className="vomit-section-lbl">顏色（可複選）</span>
+                        <div className="chips">
+                          {VOMIT_COLOR.map(c=>{
+                            const active=(daily.vomitDetail?.color||[]).includes(c);
+                            return <button key={c} className={`vchip${active?" va":""}`}
+                              onClick={()=>{setDirty(true);setDaily(p=>({...p,vomitDetail:{...p.vomitDetail,color:active?p.vomitDetail.color.filter(x=>x!==c):[...(p.vomitDetail?.color||[]),c]}}));}}>{c}</button>;
+                          })}
+                        </div>
+                      </div>
+                      <div className="vomit-section">
+                        <span className="vomit-section-lbl">型態（單選）</span>
+                        <div className="chips">
+                          {VOMIT_FORM.map(f=>{
+                            const active=daily.vomitDetail?.form===f;
+                            return <button key={f} className={`vchip${active?" va":""}`}
+                              onClick={()=>{setDirty(true);setDaily(p=>({...p,vomitDetail:{...p.vomitDetail,form:active?"":f}}));}}>{f}</button>;
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+              <div className="field-group">
+                <span className="field-label">補充描述</span>
+                <textarea className="inp" value={daily.issueNote} onChange={e=>up("issueNote",e.target.value)} rows={2} placeholder="詳細描述…"/>
+              </div>
+              <div className="divider"/>
+              <div>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                  <span className="field-label" style={{marginBottom:0}}>📎 媒體連結</span>
+                  <button className="add-btn add-s" onClick={()=>{ setDirty(true); setDaily(p=>({...p,issueLinks:[...(p.issueLinks||[]),{label:"",url:""}]})); }}>＋ 新增連結</button>
+                </div>
+                <div style={{fontSize:12,color:"var(--text3)",marginBottom:8,fontWeight:500}}>
+                  將照片或影片上傳至 Google Photos、iCloud 或 LINE，再將連結貼入
+                </div>
+                {!(daily.issueLinks||[]).length && <div className="empty-hint" style={{padding:"6px 0"}}>尚無媒體連結</div>}
+                {(daily.issueLinks||[]).map((lk,i)=>(
+                  <div key={i} className="media-link-row">
+                    <select
+                      style={{width:90,padding:"8px 8px",border:"2px solid rgba(41,128,212,0.18)",borderRadius:10,fontSize:12,fontWeight:700,background:"rgba(41,128,212,0.04)",color:"var(--text2)",fontFamily:"var(--font)",flexShrink:0}}
+                      value={lk.label}
+                      onChange={e=>{ setDirty(true); setDaily(p=>({...p,issueLinks:p.issueLinks.map((x,j)=>j===i?{...x,label:e.target.value}:x)})); }}>
+                      <option value="">類型</option>
+                      <option value="📷 照片">📷 照片</option>
+                      <option value="🎥 影片">🎥 影片</option>
+                      <option value="🔗 其他">🔗 其他</option>
+                    </select>
+                    <input
+                      className="media-link-inp"
+                      value={lk.url}
+                      onChange={e=>{ setDirty(true); setDaily(p=>({...p,issueLinks:p.issueLinks.map((x,j)=>j===i?{...x,url:e.target.value}:x)})); }}
+                      placeholder="貼上連結…"
+                    />
+                    {lk.url && (
+                      <a href={lk.url} target="_blank" rel="noreferrer" className="media-link-open" title="開啟連結">↗</a>
+                    )}
+                    <button className="del-btn" onClick={()=>{ setDirty(true); setDaily(p=>({...p,issueLinks:p.issueLinks.filter((_,j)=>j!==i)})); }}>✕</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Activity log */}
+          <div className="card">
+            <div className="card-head">
+              <div className="card-title"><div className="card-icon" style={{background:"#fef9c3"}}>🎮</div>活動紀錄</div>
+            </div>
+            <div className="card-body">
+              {/* Play session */}
+              <div
+                className={`activity-toggle${daily.playSession?.played?" on":""}`}
+                onClick={()=>{ setDirty(true); setDaily(p=>({...p,playSession:{...p.playSession,played:!p.playSession?.played}})); }}>
+                <div className="activity-toggle-dot"/>
+                <span className="activity-toggle-label">🎾 今天有陪玩</span>
+                {daily.playSession?.duration && <span style={{fontSize:12,fontWeight:700,color:"var(--text3)"}}>{daily.playSession.duration} 分鐘</span>}
+              </div>
+              {daily.playSession?.played && (
+                <div className="activity-expand">
+                  <div className="row" style={{marginBottom:8}}>
+                    <div style={{flex:1}}>
+                      <span className="field-label">陪玩時長（分鐘）</span>
+                      <input type="number" className="inp" value={daily.playSession?.duration||""}
+                        onChange={e=>{ setDirty(true); setDaily(p=>({...p,playSession:{...p.playSession,duration:e.target.value}})); }}
+                        placeholder="例：15"/>
+                    </div>
+                  </div>
+                  <div style={{marginBottom:8}}>
+                    <span className="field-label">玩具 / 活動方式</span>
+                    <div className="chips" style={{marginBottom:6}}>
+                      {["逗貓棒","雷射筆","老鼠玩具","紙袋","紙箱","貓薄荷","球"].map(toy=>{
+                        const toys = daily.playSession?.toys||[];
+                        const active = toys.includes(toy);
+                        return <button key={toy}
+                          className={`chip chip-sm${active?" ac":""}`}
+                          style={active?{borderColor:color,background:`${color}12`,color}:{}}
+                          onClick={()=>{ setDirty(true); setDaily(p=>({...p,playSession:{...p.playSession,toys:active?toys.filter(t=>t!==toy):[...toys,toy]}})); }}>{toy}</button>;
+                      })}
+                    </div>
+                  </div>
+                  <div style={{marginBottom:8}}>
+                    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+                      <span style={{fontSize:16}}>⚡</span>
+                      <div style={{flex:1}}>
+                        <span style={{fontSize:13,fontWeight:800,color:"var(--text)",display:"block",lineHeight:1.2}}>反應</span>
+                        <span style={{fontSize:10,fontWeight:500,color:"var(--text3)"}}>對外界刺激的敏感度與反應強度</span>
+                      </div>
+                      {daily.playSession?.reactivity>0 && (
+                        <span style={{fontSize:18,fontWeight:900,color:"#818cf8"}}>{daily.playSession.reactivity}</span>
+                      )}
+                    </div>
+                    <div style={{display:"flex",gap:5}}>
+                      {[
+                        {n:1,label:"無反應",  sub:"忽略刺激"},
+                        {n:2,label:"低反應",  sub:"反應慢"},
+                        {n:3,label:"正常",    sub:"適度反應"},
+                        {n:4,label:"高反應",  sub:"敏感、反應快"},
+                        {n:5,label:"過度反應",sub:"易驚嚇"},
+                      ].map(lv=>{
+                        const active = daily.playSession?.reactivity===lv.n;
+                        return (
+                          <button key={lv.n}
+                            className={`behavior-score-btn${active?" bsa":""}`}
+                            style={active?{background:"rgba(129,140,248,0.12)",borderColor:"#818cf8"}:{}}
+                            onClick={()=>{ setDirty(true); setDaily(p=>({...p,playSession:{...p.playSession,reactivity:p.playSession?.reactivity===lv.n?0:lv.n}})); }}>
+                            <span className="bsn" style={active?{color:"#818cf8"}:{}}>{lv.n}</span>
+                            <span className="bsl" style={active?{color:"#818cf8"}:{}}>{lv.label}</span>
+                            {lv.sub&&<span className="bss">{lv.sub}</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div>
+                    <span className="field-label">備註</span>
+                    <input className="inp" value={daily.playSession?.note||""}
+                      onChange={e=>{ setDirty(true); setDaily(p=>({...p,playSession:{...p.playSession,note:e.target.value}})); }}
+                      placeholder="例：特別活躍、追球追很久…"/>
+                  </div>
+                </div>
+              )}
+
+              {/* Outing */}
+              <div
+                className={`activity-toggle${daily.outing?.wentOut?" on":""}`}
+                onClick={()=>{ setDirty(true); setDaily(p=>({...p,outing:{...p.outing,wentOut:!p.outing?.wentOut}})); }}>
+                <div className="activity-toggle-dot"/>
+                <span className="activity-toggle-label">🚗 今天有外出</span>
+                {daily.outing?.duration && <span style={{fontSize:12,fontWeight:700,color:"var(--text3)"}}>{daily.outing.duration} 分鐘</span>}
+              </div>
+              {daily.outing?.wentOut && (
+                <div className="activity-expand" style={{marginBottom:10}}>
+                  <div className="row" style={{marginBottom:8}}>
+                    <div style={{flex:1}}>
+                      <span className="field-label">外出時長（分鐘）</span>
+                      <input type="number" className="inp" value={daily.outing?.duration||""}
+                        onChange={e=>{ setDirty(true); setDaily(p=>({...p,outing:{...p.outing,duration:e.target.value}})); }}
+                        placeholder="例：60"/>
+                    </div>
+                    <div style={{flex:1}}>
+                      <span className="field-label">目的地</span>
+                      <input className="inp" value={daily.outing?.destination||""}
+                        onChange={e=>{ setDirty(true); setDaily(p=>({...p,outing:{...p.outing,destination:e.target.value}})); }}
+                        placeholder="例：動物醫院、寵物店…"/>
+                    </div>
+                  </div>
+                  <div>
+                    <span className="field-label">備註</span>
+                    <input className="inp" value={daily.outing?.note||""}
+                      onChange={e=>{ setDirty(true); setDaily(p=>({...p,outing:{...p.outing,note:e.target.value}})); }}
+                      placeholder="例：搭車很緊張、到了很快放鬆…"/>
+                  </div>
+                </div>
+              )}
+
+              {/* Training */}
+              <div className="divider"/>
+              <span className="field-label" style={{display:"block",marginBottom:8}}>🎯 每日訓練</span>
+              {TRAINING_ITEMS.map(item=>{
+                const rec = (daily.training||[]).find(t=>t.id===item.id);
+                const selected = !!rec;
+                const toggleItem = () => {
+                  setDirty(true);
+                  setDaily(p=>{
+                    const cur = p.training||[];
+                    return {...p, training: selected
+                      ? cur.filter(t=>t.id!==item.id)
+                      : [...cur, {id:item.id, status:""}]
+                    };
+                  });
+                };
+                const setStatus = (s) => {
+                  setDirty(true);
+                  setDaily(p=>({...p, training:(p.training||[]).map(t=>t.id===item.id?{...t,status:t.status===s?"":s}:t)}));
+                };
+                return (
+                  <div key={item.id} className={`training-item${selected?" selected":""}`}>
+                    <div className="training-item-head" onClick={toggleItem}>
+                      <div className="training-item-icon">{item.icon}</div>
+                      <span className="training-item-label">{item.label}</span>
+                      {selected && rec.status && (
+                        <span style={{
+                          fontSize:11, fontWeight:800, padding:"3px 9px", borderRadius:50,
+                          background: TRAINING_STATUS.find(s=>s.v===rec.status)?.bg||"#f1f5f9",
+                          color: TRAINING_STATUS.find(s=>s.v===rec.status)?.color||"#64748b",
+                        }}>{rec.status}</span>
+                      )}
+                      <div className="training-check">
+                        {selected && <span style={{fontSize:12,fontWeight:900,color:"white"}}>✓</span>}
+                      </div>
+                    </div>
+                    {selected && (
+                      <div className="training-status-row" style={{flexDirection:"column",gap:8}}>
+                        <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
+                          {TRAINING_STATUS.map(s=>(
+                            <button key={s.v} className="tstatus-btn"
+                              style={{
+                                borderColor: rec.status===s.v ? s.color : "rgba(41,128,212,0.15)",
+                                background: rec.status===s.v ? s.bg : "white",
+                                color: rec.status===s.v ? s.color : "var(--text2)",
+                              }}
+                              onClick={()=>setStatus(s.v)}>{s.v}</button>
+                          ))}
+                        </div>
+                        <input
+                          className="inp"
+                          value={rec.note||""}
+                          onChange={e=>{ setDirty(true); setDaily(p=>({...p,training:(p.training||[]).map(t=>t.id===item.id?{...t,note:e.target.value}:t)})); }}
+                          placeholder="進度備註…例：今天摸到第二節、有抗拒但沒逃跑"
+                        />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Medications */}
+          <div className="card">
+            <div className="card-head">
+              <div className="card-title"><div className="card-icon" style={{background:"#d1fae5"}}>💊</div>吃藥紀錄</div>
+              <button className="add-btn" style={{borderColor:"#10b981",color:"#10b981"}} onClick={()=>add("meds",emptyMed())}>＋ 新增</button>
+            </div>
+            <div className="card-body">
+              {!(daily.meds||[]).length && <div className="empty-hint">今日無用藥紀錄</div>}
+              {(daily.meds||[]).map((m,i)=>(
+                <div key={i} className="med-item">
+                  <div style={{display:"flex",gap:8,alignItems:"flex-start",marginBottom:8}}>
+                    <div style={{flex:1}}>
+                      <span className="med-label">藥物名稱</span>
+                      <input className="med-inp" value={m.name} onChange={e=>upItem("meds",i,"name",e.target.value)} placeholder="藥物名稱"/>
+                    </div>
+                    <button className="del-btn" style={{background:"#d1fae5",color:"#065f46",marginTop:18}} onClick={()=>rem("meds",i)}>✕</button>
+                  </div>
+                  <div style={{display:"flex",gap:8,marginBottom:8}}>
+                    <div style={{flex:1}}>
+                      <span className="med-label">劑量</span>
+                      <input className="med-inp" value={m.dose} onChange={e=>upItem("meds",i,"dose",e.target.value)} placeholder="例：0.5"/>
+                    </div>
+                    <div style={{width:80}}>
+                      <span className="med-label">單位</span>
+                      <select className="med-inp" value={m.unit} onChange={e=>upItem("meds",i,"unit",e.target.value)}>
+                        <option value="">單位</option>
+                        <option>ml</option>
+                        <option>mg</option>
+                        <option>顆</option>
+                        <option>錠</option>
+                        <option>滴</option>
+                        <option>包</option>
+                      </select>
+                    </div>
+                    <div style={{width:90}}>
+                      <span className="med-label">給藥方式</span>
+                      <select className="med-inp" value={m.route} onChange={e=>upItem("meds",i,"route",e.target.value)}>
+                        <option value="">方式</option>
+                        <option>口服</option>
+                        <option>混入食物</option>
+                        <option>皮下注射</option>
+                        <option>外用</option>
+                        <option>滴耳</option>
+                        <option>滴眼</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div style={{display:"flex",gap:8,alignItems:"flex-end",marginBottom:8}}>
+                    <div style={{width:110}}>
+                      <span className="med-label">給藥時間</span>
+                      <input type="time" className="med-inp" value={m.time} onChange={e=>upItem("meds",i,"time",e.target.value)}/>
+                    </div>
+                    <div style={{flex:1}}>
+                      <span className="med-label">狀態</span>
+                      <button className={`med-given-btn${m.given?" given":""}`}
+                        onClick={()=>upItem("meds",i,"given",!m.given)}>
+                        <span className="med-check">{m.given&&<span style={{fontSize:11,fontWeight:900}}>✓</span>}</span>
+                        {m.given ? "已給藥" : "未給藥"}
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <span className="med-label">備註</span>
+                    <input className="med-inp" value={m.note} onChange={e=>upItem("meds",i,"note",e.target.value)} placeholder="例：與食物同服、需觀察反應…"/>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Vet visits */}
+          <div className="card">
+            <div className="card-head">
+              <div className="card-title"><div className="card-icon" style={{background:"#dbeafe"}}>🏥</div>就醫紀錄</div>
+              <button className="add-btn" style={{borderColor:"#3b82f6",color:"#3b82f6"}} onClick={()=>add("vetVisits",emptyVet())}>＋ 新增</button>
+            </div>
+            <div className="card-body">
+              {!(daily.vetVisits||[]).length && <div className="empty-hint">今日無就醫紀錄</div>}
+              {(daily.vetVisits||[]).map((v,i)=>(
+                <div key={i} className="vet-item">
+                  <div className="vet-row">
+                    <div style={{flex:1}}>
+                      <span className="vet-label">診所 / 醫院</span>
+                      <input className="vet-inp" value={v.clinic} onChange={e=>upItem("vetVisits",i,"clinic",e.target.value)} placeholder="診所或醫院名稱"/>
+                    </div>
+                    <div style={{width:100}}>
+                      <span className="vet-label">主治獸醫</span>
+                      <input className="vet-inp" value={v.vet} onChange={e=>upItem("vetVisits",i,"vet",e.target.value)} placeholder="醫師姓名"/>
+                    </div>
+                    <button className="del-btn" style={{background:"#dbeafe",color:"#1d4ed8"}} onClick={()=>rem("vetVisits",i)}>✕</button>
+                  </div>
+                  <div className="vet-row">
+                    <div style={{flex:1}}>
+                      <span className="vet-label">就診原因</span>
+                      <input className="vet-inp" value={v.reason} onChange={e=>upItem("vetVisits",i,"reason",e.target.value)} placeholder="例：嘔吐、定期健檢…"/>
+                    </div>
+                    <div style={{width:90}}>
+                      <span className="vet-label">費用</span>
+                      <input className="vet-inp" value={v.cost} onChange={e=>upItem("vetVisits",i,"cost",e.target.value)} placeholder="NT$"/>
+                    </div>
+                  </div>
+                  <div style={{marginBottom:8}}>
+                    <span className="vet-label">診斷結果</span>
+                    <textarea className="vet-inp" value={v.diagnosis} onChange={e=>upItem("vetVisits",i,"diagnosis",e.target.value)} rows={2} placeholder="醫師診斷內容…"/>
+                  </div>
+                  <div style={{marginBottom:8}}>
+                    <span className="vet-label">治療處置</span>
+                    <textarea className="vet-inp" value={v.treatment} onChange={e=>upItem("vetVisits",i,"treatment",e.target.value)} rows={2} placeholder="例：打針、點滴、手術…"/>
+                  </div>
+                  <div className="vet-row" style={{marginBottom:8}}>
+                    <div style={{flex:1}}>
+                      <span className="vet-label">開立藥物</span>
+                      <input className="vet-inp" value={v.meds} onChange={e=>upItem("vetVisits",i,"meds",e.target.value)} placeholder="藥物名稱及劑量"/>
+                    </div>
+                    <div style={{flex:1}}>
+                      <span className="vet-label">複診日期</span>
+                      <input type="date" className="vet-inp" value={v.followUp} onChange={e=>upItem("vetVisits",i,"followUp",e.target.value)}/>
+                    </div>
+                  </div>
+                  <div>
+                    <span className="vet-label">備註</span>
+                    <textarea className="vet-inp" value={v.note} onChange={e=>upItem("vetVisits",i,"note",e.target.value)} rows={2} placeholder="其他注意事項…"/>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Notes */}
+          <div className="card">
+            <div className="card-head"><div className="card-title"><div className="card-icon" style={iconBg("#64748b")}>📝</div>每日備註</div></div>
+            <div className="card-body">
+              <textarea className="inp" value={daily.note} onChange={e=>up("note",e.target.value)} rows={3} placeholder="其他觀察、獸醫建議…"/>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bottom bar */}
+      {view==="record"&&(
+        <div className="bottom-bar">
+          <button className="hist-btn" onClick={()=>setShowHist(true)}>
+            <span>所有紀錄</span>
+          </button>
+          <button className="export-btn" onClick={exportData} title="匯出資料">
+            📤
+          </button>
+          <button
+            className={`save-btn${saved?" done":""}`}
+            style={(!dirty && !saved) ? {} : {background: saved ? "#b0bec5" : "#3a6fa8", boxShadow: saved ? "none" : "0 4px 16px rgba(58,111,168,0.35)"}}
+            disabled={!dirty && !saved}
+            onClick={save}>
+            <span>{saved ? "已儲存！" : dirty ? "儲存紀錄" : "尚未修改"}</span>
+          </button>
+        </div>
+      )}
+    </>
+  );
+}
+
+// ─── App Root ─────────────────────────────────────────────────────────────────
+// ─── Reminder System ──────────────────────────────────────────────────────────
+const DEFAULT_REMINDERS = {
+  litter:   { cycle:30, lastDone:"2026-04-12", label:"換貓砂",   icon:"🪣", color:"#7c3aed", bg:"#f5f3ff", shared:true  },
+  dewormer_sakura: { cycle:30, lastDone:"2026-04-12", label:"點驅蟲藥（櫻）", icon:"💊", color:"#CA8182", bg:"#fdf0f0", shared:false, catId:"sakura" },
+  dewormer_xi:     { cycle:30, lastDone:"2026-04-12", label:"點驅蟲藥（樨）", icon:"💊", color:"#d4845a", bg:"#fdf4ee", shared:false, catId:"xi"     },
+};
+
+function parseDate(str) {
+  const [y,m,d] = str.split("-").map(Number);
+  return new Date(y, m-1, d);
+}
+function daysBetween(a, b) {
+  return Math.round((parseDate(b) - parseDate(a)) / 86400000);
+}
+function daysUntil(dateStr) {
+  if (!dateStr) return null;
+  return daysBetween(todayStr(), dateStr);
+}
+function daysOverdue(lastDone, cycle) {
+  if (!lastDone) return cycle; // never done = fully overdue
+  const elapsed = daysBetween(lastDone, todayStr());
+  return elapsed - cycle;
+}
+function urgencyColor(overdue) {
+  if (overdue >= 0) return "#ef4444";
+  if (overdue >= -2) return "#f97316";
+  return "#22c55e";
+}
+function urgencyBg(overdue) {
+  if (overdue >= 0) return "#fef2f2";
+  if (overdue >= -2) return "#fff7ed";
+  return "#f0fdf4";
+}
+
+function ReminderSystem({ catId, catNames, allVetFollowUps }) {
+  const [reminders, setReminders] = React.useState(DEFAULT_REMINDERS);
+
+  React.useEffect(()=>{
+    (async()=>{
+      const saved = await getStorage("reminders:global");
+      if (saved) {
+        // Merge saved data with defaults, keeping DEFAULT cycle values but restoring lastDone
+        const merged = {};
+        for (const key of Object.keys(DEFAULT_REMINDERS)) {
+          merged[key] = { ...DEFAULT_REMINDERS[key], ...(saved[key]||{}), cycle: DEFAULT_REMINDERS[key].cycle };
+        }
+        setReminders(merged);
+      }
+    })();
+  },[]);
+
+  const saveReminders = async (next) => {
+    setReminders(next);
+    await setStorage("reminders:global", next);
+  };
+
+  const [editingKey, setEditingKey] = React.useState(null);
+  const [editDate, setEditDate] = React.useState("");
+
+  const markDone = async (key, date) => {
+    const next = {...reminders, [key]:{...reminders[key], lastDone: date || todayStr()}};
+    await saveReminders(next);
+    setEditingKey(null);
+  };
+
+  const setCycle = async (key, val) => {
+    const next = {...reminders, [key]:{...reminders[key], cycle:parseInt(val)||1}};
+    await saveReminders(next);
+  };
+
+  // Build active reminders list (cycle-based)
+  const activeReminders = Object.entries(reminders)
+    .filter(([,r]) => !r.shared || r.shared) // all
+    .map(([key, r]) => ({
+      key, ...r,
+      overdue: daysOverdue(r.lastDone, r.cycle),
+      nextDue: r.lastDone
+        ? (() => {
+            const [y,m,d] = r.lastDone.split("-").map(Number);
+            const date = new Date(y, m-1, d + r.cycle);
+            return `${date.getFullYear()}/${date.getMonth()+1}/${date.getDate()}`;
+          })()
+        : "尚未記錄",
+    }));
+
+  // Vet follow-up reminders (date-based, from vetVisits)
+  const vetReminders = allVetFollowUps.flatMap(({catId:cid, followUp, clinic, reason}) => {
+    if (!followUp) return [];
+    const until = daysUntil(followUp);
+    if (until < -7) return []; // more than 7 days past, hide
+    return [{ key:`vet_${cid}_${followUp}`, icon:"🏥", label:`回診 ${clinic||""}`, sub:reason||"", date:followUp, until, catId:cid, color:"#1d4ed8", bg:"#eff6ff" }];
+  });
+
+  const [collapsed, setCollapsed] = React.useState(false);
+
+  const allItems = [...activeReminders, ...vetReminders];
+  const urgentCount = allItems.filter(r =>
+    r.key.startsWith("vet_") ? r.until <= 0 : r.overdue >= 0
+  ).length;
+
+  const getStatus = (r) => {
+    const isVet = r.key.startsWith("vet_");
+    if (!isVet && r.lastDone === todayStr()) return "done";
+    if (isVet) return r.until <= 0 ? "urgent" : r.until <= 3 ? "soon" : "ok";
+    return r.overdue >= 0 ? "urgent" : r.overdue >= -3 ? "soon" : "ok";
+  };
+  const SC = {
+    done:   { dot:"#22c55e", bg:"#f0fdf4", text:"#16a34a" },
+    urgent: { dot:"#ef4444", bg:"#fef2f2", text:"#dc2626" },
+    soon:   { dot:"#f97316", bg:"#fff7ed", text:"#c2410c" },
+    ok:     { dot:"#22c55e", bg:"transparent", text:"#16a34a" },
+  };
+
+  return (
+    <div className="notif-area">
+      <div className="notif-header" onClick={()=>setCollapsed(c=>!c)}>
+        <div className="notif-header-left">
+          <span style={{fontSize:16}}>🔔</span>
+          <span className="notif-header-title">提醒事項</span>
+          {urgentCount > 0
+            ? <span className="notif-badge">{urgentCount} 項待處理</span>
+            : <span className="notif-badge ok">全部正常</span>
+          }
+        </div>
+        <span className="notif-toggle">{collapsed ? "展開 ▼" : "收起 ▲"}</span>
+      </div>
+
+      {!collapsed && (
+        <div className="notif-list">
+          {allItems.map(r => {
+            const isVet = r.key.startsWith("vet_");
+            const justDone = !isVet && r.lastDone === todayStr();
+            const status = getStatus(r);
+            const sc = SC[status];
+            const catName = isVet ? (catNames[r.catId]||r.catId) : null;
+            const lastText = !isVet && r.lastDone ? r.lastDone.replace(/-/g,"/") : null;
+            const nextText = !isVet ? r.nextDue : null;
+            const statusText = isVet
+              ? (r.until < 0 ? `已逾期 ${-r.until} 天` : r.until === 0 ? "今天！" : `還有 ${r.until} 天`)
+              : justDone ? "今天已完成"
+              : r.overdue >= 0 ? `已逾期 ${r.overdue} 天`
+              : `還有 ${-r.overdue} 天`;
+
+            return (
+              <div key={r.key} className="notif-row" style={{background: sc.bg}}>
+                <div className="notif-dot" style={{background: sc.dot}}/>
+                <div className="notif-icon" style={{background:`${sc.dot}18`}}>
+                  {justDone ? "✅" : r.icon}
+                </div>
+                <div className="notif-info">
+                  <span className="notif-title">
+                    {r.label}{catName ? ` · ${catName}` : ""}
+                  </span>
+                  <div className="notif-meta">
+                    <span className="notif-meta-item" style={{color:sc.text,fontWeight:800}}>
+                      {statusText}
+                    </span>
+                    {lastText && (
+                      <span className="notif-meta-item" style={{color:"var(--text3)"}}>
+                        上次 {lastText}
+                      </span>
+                    )}
+                    {nextText && (
+                      <span className="notif-meta-item" style={{color:"var(--text2)"}}>
+                        下次 {nextText}
+                      </span>
+                    )}
+                    {!isVet && (
+                      <span className="notif-meta-item" style={{color:"var(--text3)"}}>
+                        每 {r.cycle} 天
+                      </span>
+                    )}
+                    {isVet && r.sub && (
+                      <span className="notif-meta-item" style={{color:"var(--text3)"}}>{r.sub}</span>
+                    )}
+                  </div>
+                </div>
+                {!isVet && !justDone && (
+                  editingKey === r.key ? (
+                    <div style={{display:"flex",flexDirection:"column",gap:5,alignItems:"flex-end",flexShrink:0}}>
+                      <input type="date" value={editDate}
+                        onChange={e=>setEditDate(e.target.value)}
+                        style={{padding:"5px 8px",border:"1.5px solid #a7f3d0",borderRadius:8,fontSize:12,fontWeight:600,background:"#f0fdf4",color:"var(--text)",fontFamily:"var(--font)",width:130}}/>
+                      <div style={{display:"flex",gap:5}}>
+                        <button className="notif-action"
+                          style={{background:"#22c55e",color:"white",fontSize:11,padding:"4px 10px"}}
+                          onClick={async()=>{
+                            if(r.key==="backup") await downloadJSON();
+                            markDone(r.key, editDate);
+                          }}>確認</button>
+                        <button className="notif-action"
+                          style={{background:"#f1f5f9",color:"var(--text2)",fontSize:11,padding:"4px 10px"}}
+                          onClick={()=>setEditingKey(null)}>取消</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button className="notif-action"
+                      style={{background:sc.dot, color:"white"}}
+                      onClick={()=>{ setEditingKey(r.key); setEditDate(todayStr()); }}>
+                      {r.key==="backup" ? "下載" : "完成"}
+                    </button>
+                  )
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── App ──────────────────────────────────────────────────────────────────────
+function App() {
+  const [tab, setTab] = React.useState("sakura");
+  const [catInfo, setCatInfo] = React.useState({sakura:{name:"",bday:""},xi:{name:"",bday:""}});
+  const [vetFollowUps, setVetFollowUps] = React.useState([]);
+
+  React.useEffect(()=>{
+    (async()=>{
+      for(const c of CATS){
+        const d=await getStorage(`cat:${c.id}`);
+        if(d) setCatInfo(p=>({...p,[c.id]:{name:d.name||"",bday:d.birthday||""}}));
+      }
+      // collect all vet follow-ups
+      const allFollowUps = [];
+      for (const c of CATS) {
+        const keys = await (async()=>{ const _p=`daily:${c.id}:`; const _k=[]; for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k&&k.startsWith(_p))_k.push(k); } return {keys:_k}; })();
+        for (const k of (keys?.keys||[])) {
+          const rec = await getStorage(k);
+          if (rec?.vetVisits?.length) {
+            rec.vetVisits.forEach(v => {
+              if (v.followUp) allFollowUps.push({ catId:c.id, followUp:v.followUp, clinic:v.clinic, reason:v.reason });
+            });
+          }
+        }
+      }
+      const seen = new Set();
+      const filtered = allFollowUps.filter(f=>{
+        const key = `${f.catId}_${f.followUp}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return daysUntil(f.followUp) > -8;
+      });
+      setVetFollowUps(filtered);
+    })();
+  },[]);
+
+  const catNames = {sakura: catInfo.sakura?.name||"櫻", xi: catInfo.xi?.name||"樨"};
+
+  return (
+    <>
+      <style>{css}</style>
+      <div className="app">
+        <div className="cat-tabs">
+          {CATS.map(c=>(
+            <button key={c.id} className={`cat-tab${tab===c.id?" active":""}`}
+              style={tab===c.id ? {background:c.grad} : {}}
+              onClick={()=>setTab(c.id)}>
+              <div className="ct-inner">
+                <span className="ct-emoji" style={{filter: tab===c.id ? "none" : "grayscale(0.6) opacity(0.55)"}}>
+                  <CatIcon catId={c.id} size={38} color={c.color} />
+                </span>
+                <div className="ct-text">
+                  <span className="ct-name" style={{color: tab===c.id ? "white" : c.color}}>
+                    {catInfo[c.id]?.name || c.label}
+                  </span>
+                </div>
+              </div>
+            </button>
+          ))}
+        </div>
+        <ReminderSystem catId={tab} catNames={catNames} allVetFollowUps={vetFollowUps}/>
+        <CatTab key={tab} meta={CATS.find(c=>c.id===tab)}/>
+      </div>
+    </>
+  );
+}
+
+const rootEl = document.getElementById('root');
+if (typeof ReactDOM.createRoot === 'function') {
+  ReactDOM.createRoot(rootEl).render(React.createElement(App));
+} else {
+  ReactDOM.render(React.createElement(App), rootEl);
+}
+  </script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(()=>{});
+      });
+    }
+  </script>
+</body>
+</html>

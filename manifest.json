@@ -1,0 +1,24 @@
+{
+  "name": "櫻 & 樨 飲食紀錄器",
+  "short_name": "貓咪紀錄",
+  "description": "記錄兩隻貓咪的每日飲食與健康狀況",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f3f4f8",
+  "theme_color": "#f3f4f8",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
