@@ -408,34 +408,82 @@ const css = `
 .ct-age { font-size: 11px; font-weight: 600; opacity:.65; display:block; margin-top:2px; }
 
 /* ── View toggle ── */
-.view-tabs {
-  display: flex;
-  gap: 6px;
-  padding: 14px 16px 6px;
-  position: relative; z-index:1;
+.view-tabs { display:none; } /* 移除舊 tab bar */
+
+/* ── Hamburger menu ── */
+.hamburger-btn {
+  width: 38px; height: 38px; border-radius: 12px;
+  border: none; background: white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  cursor: pointer; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 5px;
+  flex-shrink: 0; transition: all .15s;
 }
-.view-tab {
-  flex: 1;
-  padding: 10px;
-  border-radius: 50px;
-  border: 2px solid transparent;
-  font-family: var(--font);
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all .2s;
-  background: rgba(255,255,255,0.6);
+.hamburger-btn:active { transform: scale(0.95); }
+.hamburger-line {
+  width: 18px; height: 2px; border-radius: 2px;
+  background: var(--text2); transition: all .2s;
+}
+.menu-overlay {
+  position: fixed; inset: 0;
+  background: rgba(10,20,50,0.4);
+  backdrop-filter: blur(4px);
+  z-index: 200;
+}
+.menu-drawer {
+  position: fixed; top: 0; right: 0; bottom: 0;
+  width: 280px; background: white;
+  z-index: 201;
+  box-shadow: -8px 0 32px rgba(0,0,0,0.12);
+  display: flex; flex-direction: column;
+  animation: drawer-in .25s cubic-bezier(.34,1.3,.64,1);
+}
+@keyframes drawer-in {
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+.menu-drawer-head {
+  padding: 20px 20px 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.menu-drawer-title { font-size: 16px; font-weight: 900; color: var(--text); }
+.menu-close-btn {
+  width: 32px; height: 32px; border-radius: 50%;
+  border: none; background: #f1f5f9; cursor: pointer;
+  font-size: 16px; display: flex; align-items: center; justify-content: center;
   color: var(--text2);
 }
-.view-tab.active {
-  background: var(--accent);
-  color: white;
-  box-shadow: 0 4px 12px rgba(41,128,212,0.35);
+.menu-body { flex: 1; overflow-y: auto; padding: 10px 12px; }
+.menu-section-label {
+  font-size: 10px; font-weight: 800; color: var(--text3);
+  letter-spacing: .5px; text-transform: uppercase;
+  padding: 10px 8px 6px;
 }
+.menu-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 12px; border-radius: 12px;
+  cursor: pointer; transition: background .12s;
+  border: none; background: transparent;
+  width: 100%; text-align: left; font-family: var(--font);
+}
+.menu-item:hover { background: rgba(41,128,212,0.06); }
+.menu-item.active { background: rgba(41,128,212,0.1); }
+.menu-item-icon {
+  width: 36px; height: 36px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; flex-shrink: 0;
+}
+.menu-item-text { flex: 1; }
+.menu-item-title { font-size: 14px; font-weight: 700; color: var(--text); display: block; }
+.menu-item-sub { font-size: 11px; font-weight: 500; color: var(--text3); display: block; margin-top: 1px; }
+.menu-divider { height: 1px; background: var(--border); margin: 8px 0; }
 
 /* ── Page ── */
 .page { padding: 0 14px; position: relative; z-index:1; }
 .page-analytics { padding: 0 14px; position: relative; z-index:1; }
+
+
 
 /* ── Profile card ── */
 .profile-card {
@@ -795,6 +843,75 @@ select.inp {
   font-size: 12px; font-weight: 700; cursor: pointer;
   font-family: var(--font); flex-shrink: 0;
   transition: all .15s;
+}
+
+/* ── FMPI Assessment ── */
+.fmpi-page { padding: 14px 14px 100px; }
+.fmpi-intro {
+  background: #eff6ff; border: 1.5px solid #bfdbfe;
+  border-radius: 14px; padding: 14px 16px; margin-bottom: 16px;
+}
+.fmpi-intro-title { font-size: 14px; font-weight: 900; color: #1e40af; margin-bottom: 4px; }
+.fmpi-intro-sub { font-size: 12px; font-weight: 500; color: #3b82f6; line-height: 1.5; }
+.fmpi-section { margin-bottom: 20px; }
+.fmpi-section-title {
+  font-size: 11px; font-weight: 800; color: var(--text3);
+  letter-spacing: .5px; text-transform: uppercase;
+  margin-bottom: 10px; padding-bottom: 6px;
+  border-bottom: 1.5px solid var(--border);
+}
+.fmpi-q {
+  background: white; border-radius: 14px;
+  border: 1.5px solid var(--border);
+  padding: 13px 14px; margin-bottom: 8px;
+}
+.fmpi-q-text {
+  font-size: 13px; font-weight: 700; color: var(--text);
+  margin-bottom: 10px; line-height: 1.4;
+}
+.fmpi-scale {
+  display: flex; gap: 5px;
+}
+.fmpi-scale-btn {
+  flex: 1; padding: 8px 4px; border-radius: 10px;
+  border: 1.5px solid var(--border);
+  background: rgba(255,255,255,0.7);
+  cursor: pointer; text-align: center;
+  font-family: var(--font); transition: all .15s;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+}
+.fmpi-scale-btn.active { border-width: 2px; transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+.fmpi-scale-n { font-size: 14px; font-weight: 900; display: block; }
+.fmpi-scale-l { font-size: 8px; font-weight: 600; color: var(--text3); display: block; line-height: 1.2; }
+.fmpi-yesno { display: flex; gap: 8px; margin-top: 4px; }
+.fmpi-yn-btn {
+  flex: 1; padding: 9px; border-radius: 10px;
+  border: 1.5px solid var(--border); background: white;
+  font-size: 13px; font-weight: 700; cursor: pointer;
+  font-family: var(--font); transition: all .15s;
+}
+.fmpi-yn-btn.yes-active { background: #dcfce7; border-color: #22c55e; color: #16a34a; }
+.fmpi-yn-btn.no-active  { background: #fef2f2; border-color: #ef4444; color: #dc2626; }
+.fmpi-score-card {
+  background: white; border-radius: 16px;
+  border: 2px solid var(--border);
+  padding: 18px; margin-bottom: 16px; text-align: center;
+}
+.fmpi-score-num { font-size: 48px; font-weight: 900; line-height: 1; }
+.fmpi-score-max { font-size: 16px; font-weight: 600; color: var(--text3); }
+.fmpi-score-label { font-size: 14px; font-weight: 700; margin-top: 6px; }
+.fmpi-history-item {
+  background: white; border-radius: 12px;
+  border: 1.5px solid var(--border);
+  padding: 12px 14px; margin-bottom: 8px;
+  display: flex; align-items: center; gap: 12px;
+}
+.fmpi-save-btn {
+  width: 100%; padding: 15px;
+  border: none; border-radius: 16px;
+  font-size: 16px; font-weight: 800; cursor: pointer;
+  font-family: var(--font); color: white;
+  transition: all .2s; margin-top: 8px;
 }
 
 /* ── Bottom bar ── */
@@ -1815,13 +1932,13 @@ function HistoryPage({ cat, catId, color, onClose }) {
         ];
         const found = {};
         for (const prefix of prefixes) {
-          const result = await (async()=>{ const _k=[]; for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k&&k.startsWith(prefix))_k.push(k); } return {keys:_k}; })();
+          const result = await (async()=>{ const _p=prefix; const _k=[]; for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k&&k.startsWith(_p))_k.push(k); } return {keys:_k}; })();
           if (result?.keys?.length) found[prefix] = result.keys;
         }
         console.log("=== STORAGE SCAN RESULT ===");
         console.log(JSON.stringify(found, null, 2));
         // Also try listing with empty string to get ALL keys
-        const allResult = await (async()=>{ const _k=[]; for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k)_k.push(k); } return {keys:_k}; })();
+        const allResult = await (async()=>{ const _p=""; const _k=[]; for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k&&k.startsWith(_p))_k.push(k); } return {keys:_k}; })();
         console.log("=== ALL KEYS ===");
         console.log(JSON.stringify(allResult?.keys));
       } catch(e){ console.log("scan error", e); }
@@ -1973,6 +2090,821 @@ const downloadJSON = async () => {
   setTimeout(() => { ta.focus(); ta.select(); }, 100);
 };
 
+// ─── FMPI Assessment ──────────────────────────────────────────────────────────
+const FMPI_QUESTIONS = [
+  { id:"q1",  text:"跳上較高的地方（沙發、床、椅子等）", labels:["正常","輕微困難","明顯困難","非常困難","無法做到"] },
+  { id:"q2",  text:"跳下較高的地方", labels:["正常","輕微困難","明顯困難","非常困難","無法做到"] },
+  { id:"q3",  text:"走上樓梯或台階", labels:["正常","輕微困難","明顯困難","非常困難","無法做到"] },
+  { id:"q4",  text:"走下樓梯或台階", labels:["正常","輕微困難","明顯困難","非常困難","無法做到"] },
+  { id:"q5",  text:"奔跑或快步移動", labels:["正常","輕微困難","明顯困難","非常困難","無法做到"] },
+  { id:"q6",  text:"從靜止狀態開始移動（起身）", labels:["正常","輕微困難","明顯困難","非常困難","無法做到"] },
+  { id:"q7",  text:"整體活動量與平常相比", labels:["正常","稍微減少","明顯減少","大幅減少","幾乎不動"] },
+  { id:"q8",  text:"玩耍的意願與頻率", labels:["正常","稍微減少","明顯減少","大幅減少","完全不玩"] },
+  { id:"q9",  text:"自行梳理毛髮（尤其是背部和尾巴附近）", labels:["正常","稍微減少","明顯減少","大幅減少","完全不梳"] },
+  { id:"q10", text:"移動時的流暢度與協調性", labels:["正常","稍微僵硬","明顯僵硬","非常僵硬","嚴重異常"] },
+  { id:"q11", text:"在家中探索不同區域", labels:["正常","稍微減少","明顯減少","大幅減少","幾乎不動"] },
+  { id:"q12", text:"能夠舒適地躺下和休息", labels:["正常","偶爾不舒適","常常不舒適","大部分時間不適","無法舒適躺下"] },
+  { id:"q13", text:"被觸摸或抱起時的反應", labels:["正常","輕微抗拒","明顯抗拒","強烈抗拒","完全不接受"] },
+  { id:"q14", text:"整體情緒與脾氣（與平常相比）", labels:["正常","稍微改變","明顯改變","大幅改變","完全不同"] },
+  { id:"q15", text:"親近人或尋求互動的頻率", labels:["正常","稍微減少","明顯減少","大幅減少","完全迴避"] },
+  { id:"q16", text:"使用貓砂盆的姿勢與輕鬆程度", labels:["正常","輕微困難","明顯困難","非常困難","無法正常使用"] },
+  { id:"q17", text:"整體行動能力與正常貓咪相比", labels:["正常","輕微受限","中度受限","嚴重受限","完全無法正常活動"] },
+];
+const FMPI_YN = [
+  { id:"q18", text:"與年輕時或健康時相比，你認為這隻貓的整體狀況有變差嗎？" },
+  { id:"q19", text:"最近幾週，你認為這隻貓的狀況有惡化的趨勢嗎？" },
+  { id:"q20", text:"這隻貓需要你的協助才能完成某些日常動作嗎？" },
+  { id:"q21", text:"這隻貓的脾氣或對觸摸的接受度最近有明顯改變嗎？" },
+];
+
+const FMPI_LEVELS = [
+  { max:18,  label:"正常範圍",   color:"#22c55e", bg:"#f0fdf4" },
+  { max:36,  label:"輕度受影響", color:"#84cc16", bg:"#f7fee7" },
+  { max:54,  label:"中度受影響", color:"#f97316", bg:"#fff7ed" },
+  { max:72,  label:"嚴重受影響", color:"#ef4444", bg:"#fef2f2" },
+];
+
+function FmpiPage({ catId, color, catName }) {
+  const emptyAnswers = () => ({
+    ...Object.fromEntries(FMPI_QUESTIONS.map(q=>[q.id, null])),
+    ...Object.fromEntries(FMPI_YN.map(q=>[q.id, null])),
+  });
+
+  const [answers, setAnswers] = React.useState(emptyAnswers());
+  const [history, setHistory] = React.useState([]);
+  const [tab, setTab] = React.useState("form"); // form | history
+
+  React.useEffect(()=>{
+    (async()=>{
+      const h = await getStorage(`fmpi:${catId}`);
+      if (h) setHistory(h);
+    })();
+  },[catId]);
+
+  const answered17 = FMPI_QUESTIONS.filter(q=>answers[q.id]!==null).length;
+  const answered4  = FMPI_YN.filter(q=>answers[q.id]!==null).length;
+  const score17 = FMPI_QUESTIONS.reduce((s,q)=> answers[q.id]!==null ? s+answers[q.id] : s, 0);
+  const score4  = FMPI_YN.reduce((s,q)=> answers[q.id]===true ? s+1 : s, 0);
+  const totalScore = score17 + score4;
+  const maxScore = answered17*4 + answered4;
+  const level = FMPI_LEVELS.find(l=>totalScore<=l.max) || FMPI_LEVELS[3];
+
+  const save = async () => {
+    const entry = {
+      date: todayStr(),
+      answers: {...answers},
+      score: totalScore,
+      max: maxScore,
+      level: level.label,
+    };
+    const newHistory = [entry, ...history].slice(0,24);
+    await setStorage(`fmpi:${catId}`, newHistory);
+    setHistory(newHistory);
+    setAnswers(emptyAnswers());
+    setTab("history");
+    alert(`✅ 評估已儲存！\n${catName} 本次得分：${totalScore}/${maxScore}\n狀態：${level.label}`);
+  };
+
+  return (
+    <div className="fmpi-page">
+      {/* Tabs */}
+      <div className="view-tabs" style={{margin:"0 0 14px"}}>
+        <button className={`view-tab${tab==="form"?" active":""}`}
+          style={tab==="form"?{background:color,boxShadow:`0 4px 12px ${color}55`}:{}}
+          onClick={()=>setTab("form")}>填寫評估</button>
+        <button className={`view-tab${tab==="history"?" active":""}`}
+          style={tab==="history"?{background:color,boxShadow:`0 4px 12px ${color}55`}:{}}
+          onClick={()=>setTab("history")}>歷史記錄</button>
+      </div>
+
+      {tab==="history" && (
+        <>
+          <div className="fmpi-intro">
+            <div className="fmpi-intro-title">📊 {catName} 的 FMPI 評估歷史</div>
+            <div className="fmpi-intro-sub">建議每 3–4 週填寫一次，追蹤長期變化趨勢</div>
+          </div>
+          {!history.length && <div className="empty-hint" style={{textAlign:"center",padding:40}}>尚無評估紀錄</div>}
+          {history.map((h,i)=>{
+            const lv = FMPI_LEVELS.find(l=>h.score<=l.max)||FMPI_LEVELS[3];
+            return (
+              <div key={i} className="fmpi-history-item">
+                <div style={{flex:1}}>
+                  <div style={{fontSize:13,fontWeight:800,color:"var(--text)"}}>{h.date}</div>
+                  <div style={{fontSize:11,fontWeight:600,color:"var(--text3)",marginTop:2}}>滿分 {h.max} 分</div>
+                </div>
+                <div style={{textAlign:"center"}}>
+                  <div style={{fontSize:24,fontWeight:900,color:lv.color}}>{h.score}</div>
+                  <div style={{fontSize:10,fontWeight:700,color:lv.color,background:lv.bg,padding:"2px 8px",borderRadius:50}}>{lv.label}</div>
+                </div>
+              </div>
+            );
+          })}
+        </>
+      )}
+
+      {tab==="form" && (
+        <>
+          <div className="fmpi-intro">
+            <div className="fmpi-intro-title">🐾 貓咪行動與舒適度評估</div>
+            <div className="fmpi-intro-sub">根據過去 1–2 週的觀察填寫，0 = 正常，4 = 最嚴重。建議每 3–4 週填一次。</div>
+          </div>
+
+          {/* Score preview */}
+          {answered17+answered4 > 0 && (
+            <div className="fmpi-score-card" style={{borderColor:level.color,background:level.bg}}>
+              <div>
+                <span className="fmpi-score-num" style={{color:level.color}}>{totalScore}</span>
+                <span className="fmpi-score-max"> / {maxScore}</span>
+              </div>
+              <div className="fmpi-score-label" style={{color:level.color}}>{level.label}</div>
+              <div style={{fontSize:11,color:"var(--text3)",marginTop:4}}>已回答 {answered17}/17 題 + {answered4}/4 題</div>
+            </div>
+          )}
+
+          {/* Q1-17 */}
+          <div className="fmpi-section">
+            <div className="fmpi-section-title">行動能力評估（第 1–17 題）</div>
+            {FMPI_QUESTIONS.map((q,qi)=>(
+              <div key={q.id} className="fmpi-q">
+                <div className="fmpi-q-text">{qi+1}. {q.text}</div>
+                <div className="fmpi-scale">
+                  {q.labels.map((lbl,n)=>{
+                    const active = answers[q.id]===n;
+                    const clr = ["#22c55e","#84cc16","#f59e0b","#f97316","#ef4444"][n];
+                    return (
+                      <button key={n} className={`fmpi-scale-btn${active?" active":""}`}
+                        style={active?{background:`${clr}18`,borderColor:clr}:{}}
+                        onClick={()=>setAnswers(a=>({...a,[q.id]:a[q.id]===n?null:n}))}>
+                        <span className="fmpi-scale-n" style={active?{color:clr}:{}}>{n}</span>
+                        <span className="fmpi-scale-l">{lbl}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Q18-21 */}
+          <div className="fmpi-section">
+            <div className="fmpi-section-title">整體狀況（第 18–21 題）</div>
+            {FMPI_YN.map((q,qi)=>(
+              <div key={q.id} className="fmpi-q">
+                <div className="fmpi-q-text">{qi+18}. {q.text}</div>
+                <div className="fmpi-yesno">
+                  <button className={`fmpi-yn-btn${answers[q.id]===true?" yes-active":""}`}
+                    onClick={()=>setAnswers(a=>({...a,[q.id]:a[q.id]===true?null:true}))}>
+                    是
+                  </button>
+                  <button className={`fmpi-yn-btn${answers[q.id]===false?" no-active":""}`}
+                    onClick={()=>setAnswers(a=>({...a,[q.id]:a[q.id]===false?null:false}))}>
+                    否
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <button className="fmpi-save-btn"
+            style={{background: answered17>=10 ? color : "#e2e4ea", color: answered17>=10 ? "white" : "#b0b6c4", cursor: answered17>=10?"pointer":"not-allowed"}}
+            disabled={answered17<10}
+            onClick={save}>
+            {answered17<10 ? `請至少填寫 10 題（已填 ${answered17} 題）` : "儲存本次評估"}
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ─── HHHHHMM Quality of Life ──────────────────────────────────────────────────
+const HHHHHMM_ITEMS = [
+  {
+    id:"hurt", label:"Hurt", zh:"疼痛控制",
+    icon:"😿", color:"#ef4444",
+    desc:"是否有疼痛跡象？呼吸是否正常？",
+    hi:"完全無痛，呼吸正常", lo:"嚴重疼痛，無法控制",
+  },
+  {
+    id:"hunger", label:"Hunger", zh:"食慾",
+    icon:"🍽", color:"#f97316",
+    desc:"是否願意主動進食？體重是否穩定？",
+    hi:"食慾正常，主動進食", lo:"完全拒食，體重大幅下降",
+  },
+  {
+    id:"hydration", label:"Hydration", zh:"水分補充",
+    icon:"💧", color:"#3b82f6",
+    desc:"是否能自行飲水維持水分？",
+    hi:"自行飲水，水分充足", lo:"完全無法自行補水",
+  },
+  {
+    id:"hygiene", label:"Hygiene", zh:"衛生清潔",
+    icon:"🧼", color:"#8b5cf6",
+    desc:"是否能保持毛髮整潔？是否有失禁或褥瘡？",
+    hi:"能自行梳理，毛髮整潔", lo:"完全無法自理，皮膚潰瘍",
+  },
+  {
+    id:"happiness", label:"Happiness", zh:"快樂與精神",
+    icon:"😸", color:"#f59e0b",
+    desc:"是否對玩耍、家人、環境仍有興趣？",
+    hi:"活潑有精神，積極互動", lo:"完全退縮，毫無反應",
+  },
+  {
+    id:"mobility", label:"Mobility", zh:"行動能力",
+    icon:"🐾", color:"#22c55e",
+    desc:"是否能自行起身、移動、如廁？",
+    hi:"行動自如，無需協助", lo:"完全無法自行移動",
+  },
+  {
+    id:"moregood", label:"More Good Days", zh:"好日子多於壞日子",
+    icon:"📅", color:"#ec4899",
+    desc:"回顧近一週，好日子是否多於壞日子？",
+    hi:"幾乎每天都是好日子", lo:"幾乎每天都很痛苦",
+  },
+];
+
+function HhhhhmmPage({ catId, color, catName }) {
+  const emptyScores = () => Object.fromEntries(HHHHHMM_ITEMS.map(i=>[i.id, null]));
+  const [scores, setScores] = React.useState(emptyScores());
+  const [history, setHistory] = React.useState([]);
+  const [tab, setTab] = React.useState("form");
+  const [note, setNote] = React.useState("");
+
+  React.useEffect(()=>{
+    (async()=>{
+      const h = await getStorage(`hhhhhmm:${catId}`);
+      if (h) setHistory(h);
+    })();
+  },[catId]);
+
+  const answered = HHHHHMM_ITEMS.filter(i=>scores[i.id]!==null).length;
+  const total = HHHHHMM_ITEMS.reduce((s,i)=>scores[i.id]!==null?s+scores[i.id]:s, 0);
+  const maxPossible = answered * 10;
+
+  const getLevel = (t) => {
+    if (t >= 60) return { label:"生活品質優良", color:"#22c55e", bg:"#f0fdf4" };
+    if (t >= 45) return { label:"生活品質良好", color:"#84cc16", bg:"#f7fee7" };
+    if (t >= 35) return { label:"生活品質尚可", color:"#f97316", bg:"#fff7ed" };
+    return { label:"生活品質偏低，建議就診", color:"#ef4444", bg:"#fef2f2" };
+  };
+  const level = getLevel(total);
+
+  const save = async () => {
+    const entry = { date:todayStr(), scores:{...scores}, total, note };
+    const newHistory = [entry, ...history].slice(0,24);
+    await setStorage(`hhhhhmm:${catId}`, newHistory);
+    setHistory(newHistory);
+    setScores(emptyScores());
+    setNote("");
+    setTab("history");
+    alert(`✅ 評估已儲存！\n${catName} 本次總分：${total}/70\n狀態：${level.label}`);
+  };
+
+  return (
+    <div className="fmpi-page">
+      <div className="view-tabs" style={{margin:"0 0 14px"}}>
+        <button className={`view-tab${tab==="form"?" active":""}`}
+          style={tab==="form"?{background:color,boxShadow:`0 4px 12px ${color}55`}:{}}
+          onClick={()=>setTab("form")}>填寫評估</button>
+        <button className={`view-tab${tab==="history"?" active":""}`}
+          style={tab==="history"?{background:color,boxShadow:`0 4px 12px ${color}55`}:{}}
+          onClick={()=>setTab("history")}>歷史記錄</button>
+      </div>
+
+      {tab==="history" && (
+        <>
+          <div className="fmpi-intro">
+            <div className="fmpi-intro-title">📊 {catName} 的生活品質歷史</div>
+            <div className="fmpi-intro-sub">總分 35 以上為可接受品質，建議每月填一次，治療期間每週一次</div>
+          </div>
+          {!history.length && <div className="empty-hint" style={{textAlign:"center",padding:40}}>尚無評估紀錄</div>}
+          {history.map((h,i)=>{
+            const lv = getLevel(h.total);
+            return (
+              <div key={i} className="fmpi-history-item">
+                <div style={{flex:1}}>
+                  <div style={{fontSize:13,fontWeight:800,color:"var(--text)"}}>{h.date}</div>
+                  {h.note && <div style={{fontSize:11,color:"var(--text3)",marginTop:2}}>{h.note}</div>}
+                  <div style={{display:"flex",gap:8,marginTop:4,flexWrap:"wrap"}}>
+                    {HHHHHMM_ITEMS.map(item=>(
+                      h.scores[item.id]!==null && (
+                        <span key={item.id} style={{fontSize:10,fontWeight:700,color:item.color}}>
+                          {item.icon} {h.scores[item.id]}
+                        </span>
+                      )
+                    ))}
+                  </div>
+                </div>
+                <div style={{textAlign:"center",flexShrink:0}}>
+                  <div style={{fontSize:24,fontWeight:900,color:lv.color}}>{h.total}</div>
+                  <div style={{fontSize:10,fontWeight:700,color:lv.color,background:lv.bg,padding:"2px 8px",borderRadius:50,whiteSpace:"nowrap"}}>{lv.label}</div>
+                </div>
+              </div>
+            );
+          })}
+        </>
+      )}
+
+      {tab==="form" && (
+        <>
+          <div className="fmpi-intro">
+            <div className="fmpi-intro-title">💙 5H2M 生活品質量表（HHHHHMM）</div>
+            <div className="fmpi-intro-sub">每項 1–10 分，10 分為最佳。總分 35 以上代表生活品質可接受。由 Dr. Alice Villalobos 開發。</div>
+          </div>
+
+          {answered > 0 && (
+            <div className="fmpi-score-card" style={{borderColor:level.color,background:level.bg,marginBottom:16}}>
+              <div>
+                <span className="fmpi-score-num" style={{color:level.color}}>{total}</span>
+                <span className="fmpi-score-max"> / 70</span>
+              </div>
+              <div className="fmpi-score-label" style={{color:level.color}}>{level.label}</div>
+              <div style={{fontSize:11,color:"var(--text3)",marginTop:4}}>已填 {answered}/7 項</div>
+            </div>
+          )}
+
+          {HHHHHMM_ITEMS.map(item=>(
+            <div key={item.id} className="fmpi-q" style={{marginBottom:10}}>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+                <span style={{fontSize:20}}>{item.icon}</span>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:13,fontWeight:900,color:"var(--text)"}}>{item.zh}
+                    <span style={{fontSize:11,fontWeight:500,color:"var(--text3)",marginLeft:6}}>{item.label}</span>
+                  </div>
+                  <div style={{fontSize:11,fontWeight:500,color:"var(--text3)",marginTop:1}}>{item.desc}</div>
+                </div>
+                {scores[item.id]!==null && (
+                  <span style={{fontSize:20,fontWeight:900,color:item.color,flexShrink:0}}>{scores[item.id]}</span>
+                )}
+              </div>
+              {/* 1-10 slider row */}
+              <div style={{display:"flex",gap:3}}>
+                {[1,2,3,4,5,6,7,8,9,10].map(n=>{
+                  const active = scores[item.id]===n;
+                  const clr = n<=3?"#ef4444":n<=5?"#f97316":n<=7?"#84cc16":"#22c55e";
+                  return (
+                    <button key={n}
+                      style={{
+                        flex:1, padding:"7px 2px", borderRadius:8,
+                        border:`1.5px solid ${active?clr:"rgba(41,128,212,0.12)"}`,
+                        background: active?`${clr}20`:"white",
+                        cursor:"pointer", fontFamily:"var(--font)",
+                        fontSize:12, fontWeight:active?900:600,
+                        color: active?clr:"var(--text2)",
+                        transition:"all .13s",
+                      }}
+                      onClick={()=>setScores(s=>({...s,[item.id]:s[item.id]===n?null:n}))}>
+                      {n}
+                    </button>
+                  );
+                })}
+              </div>
+              <div style={{display:"flex",justifyContent:"space-between",marginTop:3}}>
+                <span style={{fontSize:9,color:"#ef4444",fontWeight:600}}>{item.lo}</span>
+                <span style={{fontSize:9,color:"#22c55e",fontWeight:600}}>{item.hi}</span>
+              </div>
+            </div>
+          ))}
+
+          <div style={{marginBottom:12}}>
+            <span className="field-label">備註</span>
+            <textarea className="inp" value={note} onChange={e=>setNote(e.target.value)} rows={2} placeholder="本次觀察補充說明…"/>
+          </div>
+
+          <button className="fmpi-save-btn"
+            style={{background: answered>=5?color:"#e2e4ea", color:answered>=5?"white":"#b0b6c4", cursor:answered>=5?"pointer":"not-allowed"}}
+            disabled={answered<5}
+            onClick={save}>
+            {answered<5 ? `請至少填寫 5 項（已填 ${answered} 項）` : "儲存本次評估"}
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ─── BCS Body Condition Score ─────────────────────────────────────────────────
+const BCS_GRADES = [
+  { score:1, label:"嚴重過瘦", color:"#7c3aed", bg:"#f5f3ff", fat:"<5%",
+    desc:"肋骨、脊椎、骨盆骨非常突出，無可見脂肪，肌肉量明顯流失" },
+  { score:2, label:"過瘦",   color:"#8b5cf6", bg:"#f5f3ff", fat:"5–9%",
+    desc:"肋骨容易摸到，脊椎和骨盆骨明顯突出，腰身非常明顯" },
+  { score:3, label:"偏瘦",   color:"#6366f1", bg:"#eef2ff", fat:"10–14%",
+    desc:"肋骨可摸到但有少量脂肪覆蓋，脊椎略微突出，腰身明顯" },
+  { score:4, label:"略偏瘦", color:"#3b82f6", bg:"#eff6ff", fat:"15–19%",
+    desc:"肋骨可摸到，有少量脂肪，從上方可見腰身，腹部輕微收縮" },
+  { score:5, label:"理想",   color:"#22c55e", bg:"#f0fdf4", fat:"20–24%",
+    desc:"肋骨可輕鬆摸到，有薄層脂肪，從上方腰身明顯，腹部輕微上收" },
+  { score:6, label:"略過重", color:"#84cc16", bg:"#f7fee7", fat:"25–29%",
+    desc:"肋骨可摸到但脂肪稍多，從上方腰身略不明顯，腹部脂肪稍增" },
+  { score:7, label:"過重",   color:"#f59e0b", bg:"#fefce8", fat:"30–34%",
+    desc:"肋骨不易摸到，脂肪覆蓋明顯，從上方無腰身，腹部脂肪明顯" },
+  { score:8, label:"肥胖",   color:"#f97316", bg:"#fff7ed", fat:"35–39%",
+    desc:"肋骨難以摸到，大量脂肪，腹部明顯下垂，脂肪堆積於腹部和背部" },
+  { score:9, label:"嚴重肥胖", color:"#ef4444", bg:"#fef2f2", fat:">40%",
+    desc:"肋骨無法摸到，大量脂肪分佈全身，腹部嚴重下垂，行動可能受限" },
+];
+
+// 理想體重換算公式：每超過 BCS 5 一個等級約超重 10%
+// 理想體重 = 目前體重 / (1 + (BCS-5) * 0.1)  當 BCS > 5
+// 理想體重 = 目前體重 * (1 + (5-BCS) * 0.1)  當 BCS < 5（偏低修正）
+function calcIdealWeight(currentWeight, bcs) {
+  if (!currentWeight || !bcs) return null;
+  const w = parseFloat(currentWeight);
+  if (isNaN(w) || w <= 0) return null;
+  if (bcs === 5) return w.toFixed(2);
+  if (bcs > 5) {
+    const overPct = (bcs - 5) * 0.1;
+    return (w / (1 + overPct)).toFixed(2);
+  } else {
+    const underPct = (5 - bcs) * 0.1;
+    return (w / (1 - underPct)).toFixed(2);
+  }
+}
+
+function BcsPage({ catId, color, catName }) {
+  const [bcs, setBcs] = React.useState(null);
+  const [currentWeight, setCurrentWeight] = React.useState("");
+  const [history, setHistory] = React.useState([]);
+  const [tab, setTab] = React.useState("form");
+  const [note, setNote] = React.useState("");
+
+  React.useEffect(()=>{
+    (async()=>{
+      const h = await getStorage(`bcs:${catId}`);
+      if (h) setHistory(h);
+      // 預填最近體重
+      const keys = await (async()=>{ const _p=`daily:${catId}:`; const _k=[]; for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k&&k.startsWith(_p))_k.push(k); } return {keys:_k}; })();
+      const sorted = (keys?.keys||[]).sort().reverse();
+      for (const k of sorted) {
+        const v = await getStorage(k);
+        if (v?.weight) { setCurrentWeight(String(v.weight)); break; }
+      }
+    })();
+  },[catId]);
+
+  const grade = BCS_GRADES.find(g=>g.score===bcs)||null;
+  const idealWeight = calcIdealWeight(currentWeight, bcs);
+
+  const save = async () => {
+    const entry = { date:todayStr(), bcs, currentWeight, idealWeight, note };
+    const newHistory = [entry, ...history].slice(0,24);
+    await setStorage(`bcs:${catId}`, newHistory);
+    setHistory(newHistory);
+    setBcs(null);
+    setNote("");
+    setTab("history");
+    alert(`✅ BCS 已儲存！\n${catName} 本次評分：${bcs}（${grade?.label}）${idealWeight?`\n理想體重約 ${idealWeight} kg`:""}`);
+  };
+
+  return (
+    <div className="fmpi-page">
+      <div className="view-tabs" style={{margin:"0 0 14px"}}>
+        <button className={`view-tab${tab==="form"?" active":""}`}
+          style={tab==="form"?{background:color,boxShadow:`0 4px 12px ${color}55`}:{}}
+          onClick={()=>setTab("form")}>填寫評估</button>
+        <button className={`view-tab${tab==="history"?" active":""}`}
+          style={tab==="history"?{background:color,boxShadow:`0 4px 12px ${color}55`}:{}}
+          onClick={()=>setTab("history")}>歷史記錄</button>
+      </div>
+
+      {tab==="history" && (
+        <>
+          <div className="fmpi-intro">
+            <div className="fmpi-intro-title">📊 {catName} 的 BCS 歷史</div>
+            <div className="fmpi-intro-sub">建議每月或每次就診時記錄一次，BCS 5 為最理想體態</div>
+          </div>
+          {!history.length && <div className="empty-hint" style={{textAlign:"center",padding:40}}>尚無評估紀錄</div>}
+          {history.map((h,i)=>{
+            const g = BCS_GRADES.find(g=>g.score===h.bcs)||BCS_GRADES[4];
+            return (
+              <div key={i} className="fmpi-history-item">
+                <div style={{flex:1}}>
+                  <div style={{fontSize:13,fontWeight:800,color:"var(--text)"}}>{h.date}</div>
+                  <div style={{display:"flex",gap:12,marginTop:4,flexWrap:"wrap"}}>
+                    {h.currentWeight && <span style={{fontSize:12,fontWeight:600,color:"var(--text2)"}}>實際體重：{h.currentWeight} kg</span>}
+                    {h.idealWeight && <span style={{fontSize:12,fontWeight:700,color:"#3b82f6"}}>理想體重：{h.idealWeight} kg</span>}
+                  </div>
+                  {h.note && <div style={{fontSize:11,color:"var(--text3)",marginTop:2}}>{h.note}</div>}
+                </div>
+                <div style={{textAlign:"center",flexShrink:0}}>
+                  <div style={{fontSize:28,fontWeight:900,color:g.color}}>{h.bcs}</div>
+                  <div style={{fontSize:10,fontWeight:700,color:g.color,background:g.bg,padding:"2px 8px",borderRadius:50,whiteSpace:"nowrap"}}>{g.label}</div>
+                </div>
+              </div>
+            );
+          })}
+        </>
+      )}
+
+      {tab==="form" && (
+        <>
+          <div className="fmpi-intro">
+            <div className="fmpi-intro-title">⚖️ 體況評分（BCS）</div>
+            <div className="fmpi-intro-sub">WSAVA 官方 1–9 分系統，透過觀察外觀和觸診肋骨、腰身、腹部來評分。BCS 5 為理想體態。</div>
+          </div>
+
+          {/* Current weight + ideal weight */}
+          <div className="card" style={{marginBottom:14}}>
+            <div className="card-body">
+              <div style={{display:"flex",gap:10,alignItems:"flex-end"}}>
+                <div style={{flex:1}}>
+                  <span className="field-label">目前體重（kg）</span>
+                  <div className="wt-wrap">
+                    <input type="number" step="0.01" className="inp wt-inp"
+                      value={currentWeight}
+                      onChange={e=>setCurrentWeight(e.target.value)}
+                      placeholder="例：3.6"/>
+                    <span className="wt-unit">kg</span>
+                  </div>
+                </div>
+                <div style={{flex:1}}>
+                  <span className="field-label">換算理想體重</span>
+                  <div style={{
+                    padding:"9px 12px", borderRadius:10,
+                    background: idealWeight ? "#eff6ff" : "#f8fafc",
+                    border: `1.5px solid ${idealWeight?"#3b82f6":"var(--border)"}`,
+                    fontSize:15, fontWeight:900,
+                    color: idealWeight?"#1d4ed8":"var(--text3)",
+                  }}>
+                    {idealWeight ? `${idealWeight} kg` : "— kg"}
+                  </div>
+                </div>
+              </div>
+              {idealWeight && bcs && bcs!==5 && (
+                <div style={{marginTop:8,padding:"8px 12px",background:"#eff6ff",borderRadius:8,fontSize:12,fontWeight:600,color:"#1d4ed8"}}>
+                  {bcs > 5
+                    ? `需減輕約 ${(parseFloat(currentWeight)-parseFloat(idealWeight)).toFixed(2)} kg（目前超重 ${((bcs-5)*10)}%）`
+                    : `需增加約 ${(parseFloat(idealWeight)-parseFloat(currentWeight)).toFixed(2)} kg（目前偏輕 ${((5-bcs)*10)}%）`
+                  }
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* BCS selector */}
+          <div className="fmpi-section">
+            <div className="fmpi-section-title">選擇 BCS 分數（1–9）</div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:14}}>
+              {BCS_GRADES.map(g=>{
+                const active = bcs===g.score;
+                return (
+                  <button key={g.score}
+                    style={{
+                      padding:"12px 8px", borderRadius:14,
+                      border:`2px solid ${active?g.color:"rgba(41,128,212,0.12)"}`,
+                      background: active?g.bg:"white",
+                      cursor:"pointer", fontFamily:"var(--font)", transition:"all .15s",
+                      display:"flex", flexDirection:"column", alignItems:"center", gap:3,
+                      boxShadow: active?`0 4px 12px ${g.color}40`:"none",
+                    }}
+                    onClick={()=>setBcs(b=>b===g.score?null:g.score)}>
+                    <span style={{fontSize:22,fontWeight:900,color:active?g.color:"var(--text2)"}}>{g.score}</span>
+                    <span style={{fontSize:11,fontWeight:800,color:active?g.color:"var(--text2)"}}>{g.label}</span>
+                    <span style={{fontSize:9,color:"var(--text3)"}}>體脂 {g.fat}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Selected grade detail */}
+            {grade && (
+              <div style={{padding:"12px 14px",borderRadius:12,background:grade.bg,border:`1.5px solid ${grade.color}40`,marginBottom:12}}>
+                <div style={{fontSize:13,fontWeight:800,color:grade.color,marginBottom:4}}>
+                  BCS {grade.score} — {grade.label}
+                </div>
+                <div style={{fontSize:12,fontWeight:500,color:"var(--text2)",lineHeight:1.5}}>{grade.desc}</div>
+              </div>
+            )}
+          </div>
+
+          {/* 3 checks guide */}
+          <div className="fmpi-section">
+            <div className="fmpi-section-title">評估方法（三部位觸診觀察）</div>
+            {[
+              {icon:"👋",title:"肋骨觸診",desc:"用手輕摸肋骨，感受是否有薄層脂肪覆蓋。BCS 5：輕鬆可摸到，有薄脂肪"},
+              {icon:"👁️",title:"側面輪廓",desc:"從側面觀察腹部。BCS 5：腹部從最後一根肋骨後向骨盆輕微收縮"},
+              {icon:"🔍",title:"俯視腰身",desc:"從上往下看。BCS 5：肋骨後方可見明顯腰身，不過寬也不過窄"},
+            ].map(c=>(
+              <div key={c.title} style={{display:"flex",gap:10,marginBottom:10,padding:"10px 12px",background:"rgba(41,128,212,0.04)",borderRadius:10,border:"1px solid rgba(41,128,212,0.12)"}}>
+                <span style={{fontSize:20,flexShrink:0}}>{c.icon}</span>
+                <div>
+                  <div style={{fontSize:12,fontWeight:800,color:"var(--text)",marginBottom:2}}>{c.title}</div>
+                  <div style={{fontSize:11,fontWeight:500,color:"var(--text3)",lineHeight:1.4}}>{c.desc}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{marginBottom:12}}>
+            <span className="field-label">備註</span>
+            <textarea className="inp" value={note} onChange={e=>setNote(e.target.value)} rows={2} placeholder="觸診觀察補充、外觀描述…"/>
+          </div>
+
+          <button className="fmpi-save-btn"
+            style={{background:bcs?color:"#e2e4ea",color:bcs?"white":"#b0b6c4",cursor:bcs?"pointer":"not-allowed"}}
+            disabled={!bcs}
+            onClick={save}>
+            {!bcs ? "請選擇 BCS 分數" : `儲存 BCS ${bcs}（${grade?.label}）${idealWeight?` — 理想體重 ${idealWeight} kg`:""}`}
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ─── MCS Muscle Condition Score ───────────────────────────────────────────────
+const MCS_SITES = [
+  { id:"spine",   label:"脊椎",  icon:"🦴", desc:"觸摸背部脊椎棘突" },
+  { id:"scapula", label:"肩胛骨", icon:"💪", desc:"觸摸肩胛骨周圍肌肉" },
+  { id:"skull",   label:"頭骨",  icon:"🐱", desc:"觸摸頭骨頂部及顳肌" },
+  { id:"pelvis",  label:"骨盆",  icon:"🍑", desc:"觸摸骨盆周圍肌肉" },
+];
+const MCS_GRADES = [
+  { score:0, label:"正常",       en:"Normal",   color:"#22c55e", bg:"#f0fdf4", desc:"肌肉量正常，棘突不易摸到" },
+  { score:1, label:"輕度流失",   en:"Mild",     color:"#f97316", bg:"#fff7ed", desc:"棘突可輕微摸到，肌肉稍薄" },
+  { score:2, label:"中至重度流失", en:"Moderate/Severe", color:"#ef4444", bg:"#fef2f2", desc:"棘突明顯突出，肌肉明顯減少或凹陷" },
+];
+
+function McsPage({ catId, color, catName }) {
+  const emptyScores = () => Object.fromEntries(MCS_SITES.map(s=>[s.id, null]));
+  const [scores, setScores] = React.useState(emptyScores());
+  const [overall, setOverall] = React.useState(null);
+  const [history, setHistory] = React.useState([]);
+  const [tab, setTab] = React.useState("form");
+  const [note, setNote] = React.useState("");
+
+  React.useEffect(()=>{
+    (async()=>{
+      const h = await getStorage(`mcs:${catId}`);
+      if (h) setHistory(h);
+    })();
+  },[catId]);
+
+  const answered = MCS_SITES.filter(s=>scores[s.id]!==null).length;
+  const totalScore = Object.values(scores).filter(v=>v!==null).reduce((a,b)=>a+b,0);
+  const finalScore = overall !== null ? overall : (answered===4 ? Math.round(totalScore/4) : null);
+  const grade = MCS_GRADES.find(g=>g.score===finalScore) || null;
+
+  const save = async () => {
+    const entry = { date:todayStr(), scores:{...scores}, overall:finalScore, note };
+    const newHistory = [entry, ...history].slice(0,24);
+    await setStorage(`mcs:${catId}`, newHistory);
+    setHistory(newHistory);
+    setScores(emptyScores());
+    setOverall(null);
+    setNote("");
+    setTab("history");
+    alert(`✅ MCS 已儲存！\n${catName} 本次評分：${finalScore}（${grade?.label||""}）`);
+  };
+
+  return (
+    <div className="fmpi-page">
+      <div className="view-tabs" style={{margin:"0 0 14px"}}>
+        <button className={`view-tab${tab==="form"?" active":""}`}
+          style={tab==="form"?{background:color,boxShadow:`0 4px 12px ${color}55`}:{}}
+          onClick={()=>setTab("form")}>填寫評估</button>
+        <button className={`view-tab${tab==="history"?" active":""}`}
+          style={tab==="history"?{background:color,boxShadow:`0 4px 12px ${color}55`}:{}}
+          onClick={()=>setTab("history")}>歷史記錄</button>
+      </div>
+
+      {tab==="history" && (
+        <>
+          <div className="fmpi-intro">
+            <div className="fmpi-intro-title">📊 {catName} 的 MCS 歷史</div>
+            <div className="fmpi-intro-sub">建議每月或每次就診時記錄一次</div>
+          </div>
+          {!history.length && <div className="empty-hint" style={{textAlign:"center",padding:40}}>尚無評估紀錄</div>}
+          {history.map((h,i)=>{
+            const g = MCS_GRADES.find(g=>g.score===h.overall)||MCS_GRADES[0];
+            return (
+              <div key={i} className="fmpi-history-item">
+                <div style={{flex:1}}>
+                  <div style={{fontSize:13,fontWeight:800,color:"var(--text)"}}>{h.date}</div>
+                  <div style={{display:"flex",gap:10,marginTop:4,flexWrap:"wrap"}}>
+                    {MCS_SITES.map(s=>(
+                      h.scores[s.id]!==null && (
+                        <span key={s.id} style={{fontSize:11,fontWeight:700,color:"var(--text2)"}}>
+                          {s.icon} {s.label}：{h.scores[s.id]}
+                        </span>
+                      )
+                    ))}
+                  </div>
+                  {h.note && <div style={{fontSize:11,color:"var(--text3)",marginTop:2}}>{h.note}</div>}
+                </div>
+                <div style={{textAlign:"center",flexShrink:0}}>
+                  <div style={{fontSize:28,fontWeight:900,color:g.color}}>{h.overall}</div>
+                  <div style={{fontSize:10,fontWeight:700,color:g.color,background:g.bg,padding:"2px 8px",borderRadius:50,whiteSpace:"nowrap"}}>{g.label}</div>
+                </div>
+              </div>
+            );
+          })}
+        </>
+      )}
+
+      {tab==="form" && (
+        <>
+          <div className="fmpi-intro">
+            <div className="fmpi-intro-title">💪 肌肉狀況評分（MCS）</div>
+            <div className="fmpi-intro-sub">WSAVA 官方 3 級評分系統（0–2分）。透過觸診脊椎、肩胛骨、頭骨、骨盆的肌肉來評估。</div>
+          </div>
+
+          {/* Grade reference */}
+          <div style={{display:"flex",gap:8,marginBottom:16}}>
+            {MCS_GRADES.map(g=>(
+              <div key={g.score} style={{flex:1,padding:"10px 8px",borderRadius:12,background:g.bg,border:`1.5px solid ${g.color}40`,textAlign:"center"}}>
+                <div style={{fontSize:20,fontWeight:900,color:g.color}}>{g.score}</div>
+                <div style={{fontSize:11,fontWeight:800,color:g.color}}>{g.label}</div>
+                <div style={{fontSize:9,color:"var(--text3)",marginTop:2,lineHeight:1.3}}>{g.desc}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Per-site scoring */}
+          <div className="fmpi-section">
+            <div className="fmpi-section-title">各部位觸診結果</div>
+            {MCS_SITES.map(site=>(
+              <div key={site.id} className="fmpi-q">
+                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+                  <span style={{fontSize:20}}>{site.icon}</span>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:13,fontWeight:800,color:"var(--text)"}}>{site.label}</div>
+                    <div style={{fontSize:11,color:"var(--text3)"}}>{site.desc}</div>
+                  </div>
+                  {scores[site.id]!==null && (
+                    <span style={{fontSize:18,fontWeight:900,color:MCS_GRADES[scores[site.id]].color}}>{scores[site.id]}</span>
+                  )}
+                </div>
+                <div style={{display:"flex",gap:8}}>
+                  {MCS_GRADES.map(g=>{
+                    const active = scores[site.id]===g.score;
+                    return (
+                      <button key={g.score}
+                        style={{
+                          flex:1, padding:"10px 6px", borderRadius:12,
+                          border:`2px solid ${active?g.color:"rgba(41,128,212,0.12)"}`,
+                          background: active?g.bg:"white",
+                          cursor:"pointer", fontFamily:"var(--font)", transition:"all .15s",
+                          display:"flex", flexDirection:"column", alignItems:"center", gap:3,
+                        }}
+                        onClick={()=>setScores(s=>({...s,[site.id]:s[site.id]===g.score?null:g.score}))}>
+                        <span style={{fontSize:18,fontWeight:900,color:active?g.color:"var(--text2)"}}>{g.score}</span>
+                        <span style={{fontSize:10,fontWeight:700,color:active?g.color:"var(--text3)"}}>{g.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Overall score */}
+          <div className="fmpi-section">
+            <div className="fmpi-section-title">整體 MCS 評分（最終分數）</div>
+            <div style={{fontSize:12,color:"var(--text3)",marginBottom:10}}>
+              {answered===4 ? `各部位平均：${(totalScore/4).toFixed(1)} → 建議評為 ${Math.round(totalScore/4)}` : "可直接選擇最終評分，或先填寫各部位後系統自動建議"}
+            </div>
+            <div style={{display:"flex",gap:8,marginBottom:12}}>
+              {MCS_GRADES.map(g=>{
+                const active = finalScore===g.score;
+                return (
+                  <button key={g.score}
+                    style={{
+                      flex:1, padding:"14px 8px", borderRadius:14,
+                      border:`2px solid ${active?g.color:"rgba(41,128,212,0.12)"}`,
+                      background: active?g.bg:"white",
+                      cursor:"pointer", fontFamily:"var(--font)", transition:"all .18s",
+                      display:"flex", flexDirection:"column", alignItems:"center", gap:4,
+                      boxShadow: active?`0 4px 12px ${g.color}40`:"none",
+                    }}
+                    onClick={()=>setOverall(prev=>prev===g.score?null:g.score)}>
+                    <span style={{fontSize:24,fontWeight:900,color:active?g.color:"var(--text2)"}}>{g.score}</span>
+                    <span style={{fontSize:11,fontWeight:800,color:active?g.color:"var(--text2)"}}>{g.label}</span>
+                    <span style={{fontSize:9,color:"var(--text3)",textAlign:"center",lineHeight:1.3}}>{g.en}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div style={{marginBottom:12}}>
+            <span className="field-label">備註</span>
+            <textarea className="inp" value={note} onChange={e=>setNote(e.target.value)} rows={2} placeholder="觸診觀察補充、與上次比較…"/>
+          </div>
+
+          <button className="fmpi-save-btn"
+            style={{background:finalScore!==null?color:"#e2e4ea", color:finalScore!==null?"white":"#b0b6c4", cursor:finalScore!==null?"pointer":"not-allowed"}}
+            disabled={finalScore===null}
+            onClick={save}>
+            {finalScore===null ? "請選擇整體 MCS 評分" : `儲存 MCS 評分（${finalScore} — ${grade?.label}）`}
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
 // ─── Cat Tab ──────────────────────────────────────────────────────────────────
 function CatTab({ meta }) {
   const { id:catId, color, colorLight, colorMid, grad, profileGrad } = meta;
@@ -1986,6 +2918,7 @@ function CatTab({ meta }) {
   const [view, setView] = React.useState("record");
   const [dirty, setDirty] = React.useState(false);
   const [showToast, setShowToast] = React.useState(false);
+  const [showMenu, setShowMenu] = React.useState(false);
 
   React.useEffect(()=>{
     (async()=>{const c=await getStorage(`cat:${catId}`);if(c)setCat(c);})();
@@ -2111,6 +3044,72 @@ function CatTab({ meta }) {
         setPicker(null);
       }}/>}
 
+      {/* Hamburger menu overlay */}
+      {showMenu && (
+        <>
+          <div className="menu-overlay" onClick={()=>setShowMenu(false)}/>
+          <div className="menu-drawer">
+            <div className="menu-drawer-head">
+              <span className="menu-drawer-title">選單</span>
+              <button className="menu-close-btn" onClick={()=>setShowMenu(false)}>✕</button>
+            </div>
+            <div className="menu-body">
+              <div className="menu-section-label">紀錄</div>
+              {[
+                {v:"record", icon:"📝", bg:"#eff6ff", title:"每日紀錄", sub:"記錄今天的飲食與健康"},
+                {v:"analytics", icon:"📊", bg:"#f0fdf4", title:"數據分析", sub:"體重趨勢、飲食統計"},
+              ].map(item=>(
+                <button key={item.v} className={`menu-item${view===item.v?" active":""}`}
+                  onClick={()=>{ setView(item.v); setShowMenu(false); }}>
+                  <div className="menu-item-icon" style={{background:item.bg}}>{item.icon}</div>
+                  <div className="menu-item-text">
+                    <span className="menu-item-title">{item.title}</span>
+                    <span className="menu-item-sub">{item.sub}</span>
+                  </div>
+                  {view===item.v && <span style={{color,fontSize:16}}>✓</span>}
+                </button>
+              ))}
+
+              <div className="menu-divider"/>
+              <div className="menu-section-label">健康評估量表</div>
+              {[
+                {v:"fmpi", icon:"🐾", bg:"#fef9c3", title:"行動評估（FMPI）", sub:"每 3–4 週填一次"},
+                {v:"qol",  icon:"💙", bg:"#eff6ff", title:"生活品質（5H2M）", sub:"每月或治療期間每週"},
+                {v:"mcs",  icon:"💪", bg:"#f0fdf4", title:"肌肉評分（MCS）",  sub:"每月或每次就診"},
+                {v:"bcs",  icon:"⚖️", bg:"#fef3c7", title:"體況評分（BCS）",  sub:"每月，含理想體重換算"},
+              ].map(item=>(
+                <button key={item.v} className={`menu-item${view===item.v?" active":""}`}
+                  onClick={()=>{ setView(item.v); setShowMenu(false); }}>
+                  <div className="menu-item-icon" style={{background:item.bg}}>{item.icon}</div>
+                  <div className="menu-item-text">
+                    <span className="menu-item-title">{item.title}</span>
+                    <span className="menu-item-sub">{item.sub}</span>
+                  </div>
+                  {view===item.v && <span style={{color,fontSize:16}}>✓</span>}
+                </button>
+              ))}
+
+              <div className="menu-divider"/>
+              <div className="menu-section-label">資料</div>
+              <button className="menu-item" onClick={()=>{ setShowHist(true); setShowMenu(false); }}>
+                <div className="menu-item-icon" style={{background:"#f1f5f9"}}>📋</div>
+                <div className="menu-item-text">
+                  <span className="menu-item-title">所有紀錄</span>
+                  <span className="menu-item-sub">查看與管理歷史紀錄</span>
+                </div>
+              </button>
+              <button className="menu-item" onClick={()=>{ setShowMenu(false); exportData(); }}>
+                <div className="menu-item-icon" style={{background:"#f1f5f9"}}>📤</div>
+                <div className="menu-item-text">
+                  <span className="menu-item-title">匯出資料</span>
+                  <span className="menu-item-sub">備份所有紀錄</span>
+                </div>
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
       {/* Profile */}
       <div className="profile-card">
         <div className="profile-banner" style={{background: "transparent"}}>
@@ -2133,23 +3132,23 @@ function CatTab({ meta }) {
               {cat.birthday && <span className="age-badge" style={{background:`${color}18`, color}}>{calcAge(cat.birthday)}</span>}
             </div>
           </div>
+          {/* Hamburger button */}
+          <button className="hamburger-btn" onClick={()=>setShowMenu(true)}>
+            <div className="hamburger-line"/>
+            <div className="hamburger-line"/>
+            <div className="hamburger-line"/>
+          </button>
         </div>
       </div>
 
-      {/* View toggle */}
-      <div className="view-tabs">
-        <button className={`view-tab${view==="record"?" active":""}`}
-          style={view==="record" ? {background:color, boxShadow:`0 4px 12px ${color}55`} : {}}
-          onClick={()=>setView("record")}>每日紀錄</button>
-        <button className={`view-tab${view==="analytics"?" active":""}`}
-          style={view==="analytics" ? {background:color, boxShadow:`0 4px 12px ${color}55`} : {}}
-          onClick={()=>setView("analytics")}>數據分析</button>
-      </div>
-
-      {/* Analytics */}
+      {/* Pages */}
       {view==="analytics"&&<AnalyticsPage catId={catId} color={color}/>}
+      {view==="fmpi"&&<FmpiPage catId={catId} color={color} catName={cat.name||catId}/>}
+      {view==="qol"&&<HhhhhmmPage catId={catId} color={color} catName={cat.name||catId}/>}
+      {view==="mcs"&&<McsPage catId={catId} color={color} catName={cat.name||catId}/>}
+      {view==="bcs"&&<BcsPage catId={catId} color={color} catName={cat.name||catId}/>}
 
-      {/* Record */}
+
       {view==="record"&&(
         <div className="page">
           {/* Date nav */}
@@ -2567,34 +3566,77 @@ function CatTab({ meta }) {
               <div className="divider"/>
               <div>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-                  <span className="field-label" style={{marginBottom:0}}>📎 媒體連結</span>
-                  <button className="add-btn add-s" onClick={()=>{ setDirty(true); setDaily(p=>({...p,issueLinks:[...(p.issueLinks||[]),{label:"",url:""}]})); }}>＋ 新增連結</button>
+                  <span className="field-label" style={{marginBottom:0}}>📎 媒體紀錄</span>
+                  <div style={{display:"flex",gap:6}}>
+                    <button className="add-btn add-s" style={{borderColor:"#3b82f6",color:"#3b82f6"}} onClick={()=>{
+                      const input = document.createElement("input");
+                      input.type = "file";
+                      input.accept = "image/*,video/*";
+                      input.capture = "environment";
+                      input.onchange = async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        const reader = new FileReader();
+                        reader.onload = (ev) => {
+                          const base64 = ev.target.result;
+                          const isVideo = file.type.startsWith("video/");
+                          setDirty(true);
+                          setDaily(p=>({...p, issueLinks:[...(p.issueLinks||[]), {
+                            label: isVideo ? "🎥 影片" : "📷 照片",
+                            url: "",
+                            base64,
+                            filename: file.name,
+                            size: file.size,
+                          }]}));
+                        };
+                        reader.readAsDataURL(file);
+                      };
+                      input.click();
+                    }}>📷 拍照</button>
+                    <button className="add-btn add-s" onClick={()=>{ setDirty(true); setDaily(p=>({...p,issueLinks:[...(p.issueLinks||[]),{label:"",url:"",base64:null}]})); }}>🔗 連結</button>
+                  </div>
                 </div>
-                <div style={{fontSize:12,color:"var(--text3)",marginBottom:8,fontWeight:500}}>
-                  將照片或影片上傳至 Google Photos、iCloud 或 LINE，再將連結貼入
-                </div>
-                {!(daily.issueLinks||[]).length && <div className="empty-hint" style={{padding:"6px 0"}}>尚無媒體連結</div>}
+                {!(daily.issueLinks||[]).length && <div className="empty-hint" style={{padding:"6px 0"}}>尚無媒體紀錄</div>}
                 {(daily.issueLinks||[]).map((lk,i)=>(
-                  <div key={i} className="media-link-row">
-                    <select
-                      style={{width:90,padding:"8px 8px",border:"2px solid rgba(41,128,212,0.18)",borderRadius:10,fontSize:12,fontWeight:700,background:"rgba(41,128,212,0.04)",color:"var(--text2)",fontFamily:"var(--font)",flexShrink:0}}
-                      value={lk.label}
-                      onChange={e=>{ setDirty(true); setDaily(p=>({...p,issueLinks:p.issueLinks.map((x,j)=>j===i?{...x,label:e.target.value}:x)})); }}>
-                      <option value="">類型</option>
-                      <option value="📷 照片">📷 照片</option>
-                      <option value="🎥 影片">🎥 影片</option>
-                      <option value="🔗 其他">🔗 其他</option>
-                    </select>
-                    <input
-                      className="media-link-inp"
-                      value={lk.url}
-                      onChange={e=>{ setDirty(true); setDaily(p=>({...p,issueLinks:p.issueLinks.map((x,j)=>j===i?{...x,url:e.target.value}:x)})); }}
-                      placeholder="貼上連結…"
-                    />
-                    {lk.url && (
-                      <a href={lk.url} target="_blank" rel="noreferrer" className="media-link-open" title="開啟連結">↗</a>
+                  <div key={i} style={{marginBottom:10,background:"rgba(41,128,212,0.04)",borderRadius:12,padding:"10px 12px",border:"1.5px solid rgba(41,128,212,0.12)"}}>
+                    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:lk.base64?8:0}}>
+                      <span style={{fontSize:13,fontWeight:700,color:"var(--text2)",flexShrink:0}}>{lk.label||"媒體"}</span>
+                      {lk.filename && <span style={{fontSize:11,color:"var(--text3)",flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{lk.filename}</span>}
+                      {lk.size && <span style={{fontSize:10,color:"var(--text3)",flexShrink:0}}>{(lk.size/1024).toFixed(0)}KB</span>}
+                      {!lk.base64 && (
+                        <select
+                          style={{width:90,padding:"5px 6px",border:"1.5px solid rgba(41,128,212,0.18)",borderRadius:8,fontSize:11,fontWeight:700,background:"white",color:"var(--text2)",fontFamily:"var(--font)",flexShrink:0}}
+                          value={lk.label}
+                          onChange={e=>{ setDirty(true); setDaily(p=>({...p,issueLinks:p.issueLinks.map((x,j)=>j===i?{...x,label:e.target.value}:x)})); }}>
+                          <option value="">類型</option>
+                          <option value="📷 照片">📷 照片</option>
+                          <option value="🎥 影片">🎥 影片</option>
+                          <option value="🔗 其他">🔗 其他</option>
+                        </select>
+                      )}
+                      <button className="del-btn" onClick={()=>{ setDirty(true); setDaily(p=>({...p,issueLinks:p.issueLinks.filter((_,j)=>j!==i)})); }}>✕</button>
+                    </div>
+                    {lk.base64 && lk.base64.startsWith("data:image") && (
+                      <img src={lk.base64} alt="上傳照片"
+                        style={{width:"100%",maxHeight:200,objectFit:"cover",borderRadius:8,display:"block"}}/>
                     )}
-                    <button className="del-btn" onClick={()=>{ setDirty(true); setDaily(p=>({...p,issueLinks:p.issueLinks.filter((_,j)=>j!==i)})); }}>✕</button>
+                    {lk.base64 && lk.base64.startsWith("data:video") && (
+                      <video src={lk.base64} controls
+                        style={{width:"100%",maxHeight:200,borderRadius:8,display:"block"}}/>
+                    )}
+                    {!lk.base64 && (
+                      <div className="media-link-row" style={{marginTop:6}}>
+                        <input
+                          className="media-link-inp"
+                          value={lk.url}
+                          onChange={e=>{ setDirty(true); setDaily(p=>({...p,issueLinks:p.issueLinks.map((x,j)=>j===i?{...x,url:e.target.value}:x)})); }}
+                          placeholder="貼上連結…"
+                        />
+                        {lk.url && (
+                          <a href={lk.url} target="_blank" rel="noreferrer" className="media-link-open" title="開啟連結">↗</a>
+                        )}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -2917,12 +3959,6 @@ function CatTab({ meta }) {
       {/* Bottom bar */}
       {view==="record"&&(
         <div className="bottom-bar">
-          <button className="hist-btn" onClick={()=>setShowHist(true)}>
-            <span>所有紀錄</span>
-          </button>
-          <button className="export-btn" onClick={exportData} title="匯出資料">
-            📤
-          </button>
           <button
             className={`save-btn${saved?" done":""}`}
             style={(!dirty && !saved) ? {} : {background: saved ? "#b0bec5" : "#3a6fa8", boxShadow: saved ? "none" : "0 4px 16px rgba(58,111,168,0.35)"}}
