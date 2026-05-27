@@ -1979,7 +1979,14 @@ function HistoryPage({ cat, catId, color, onClose }) {
                   await setStorage(`daily:${catId}:${date}`, rec);
                   count++;
                 }
+                // 還原量表資料
+                if (data[catId].fmpi) await setStorage(`fmpi:${catId}`, data[catId].fmpi);
+                if (data[catId].hhhhhmm) await setStorage(`hhhhhmm:${catId}`, data[catId].hhhhhmm);
+                if (data[catId].mcs) await setStorage(`mcs:${catId}`, data[catId].mcs);
+                if (data[catId].bcs) await setStorage(`bcs:${catId}`, data[catId].bcs);
               }
+              // 還原提醒事項
+              if (data._reminders) await setStorage("reminders:global", data._reminders);
               document.getElementById("importText").value = "";
               alert(`✅ 匯入完成！共還原 ${count} 筆紀錄。\n請關閉此頁面再重新開啟「所有紀錄」。`);
             } catch(err) {
@@ -2048,8 +2055,16 @@ const collectAllData = async () => {
       const v = await getStorage(k);
       if (v) records[k.replace(`daily:${c.id}:`,"")] = v;
     }
-    all[c.id] = { profile: catMeta, records };
+    // 也收集評估量表資料
+    const fmpi = await getStorage(`fmpi:${c.id}`);
+    const hhhhhmm = await getStorage(`hhhhhmm:${c.id}`);
+    const mcs = await getStorage(`mcs:${c.id}`);
+    const bcs = await getStorage(`bcs:${c.id}`);
+    all[c.id] = { profile: catMeta, records, fmpi, hhhhhmm, mcs, bcs };
   }
+  // 提醒事項
+  const reminders = await getStorage("reminders:global");
+  all._reminders = reminders;
   return all;
 };
 
