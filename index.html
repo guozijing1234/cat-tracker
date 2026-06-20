@@ -129,7 +129,7 @@ const calcAge = (bday) => {
   return `${y}歲${m}個月`;
 };
 const emptyDaily = () => ({
-  weight:"",
+  weight:"", restingRR:"",
   activity:0, reactivity:0, emotion:0,
   wets:[], drys:[],
   supplements:[], snacks:[], dewormers:[],
@@ -409,6 +409,29 @@ const css = `
 
 /* ── View toggle ── */
 .view-tabs { display:none; } /* 移除舊 tab bar */
+.sub-view-tabs {
+  display: flex;
+  gap: 6px;
+  position: relative; z-index:1;
+}
+.sub-view-tab {
+  flex: 1;
+  padding: 10px;
+  border-radius: 50px;
+  border: 2px solid transparent;
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .2s;
+  background: rgba(255,255,255,0.6);
+  color: var(--text2);
+}
+.sub-view-tab.active {
+  background: var(--accent);
+  color: white;
+  box-shadow: 0 4px 12px rgba(41,128,212,0.35);
+}
 
 /* ── Hamburger menu ── */
 .hamburger-btn {
@@ -1607,18 +1630,22 @@ function WeightChart({ records, color }) {
   );
 }
 
-function VitalityDonut({ records, color }) {
-  const counts={};
-  VITALITY.forEach(v=>counts[v.v]=0);
-  records.forEach(r=>{if(r.vitality&&counts[r.vitality]!==undefined)counts[r.vitality]++;});
+function EmotionDonut({ records, color }) {
+  const EMOTION_LEVELS = [
+    {n:1,label:"放鬆",color:"#22c55e"},
+    {n:2,label:"穩定",color:"#84cc16"},
+    {n:3,label:"緊張",color:"#f97316"},
+    {n:4,label:"壓力",color:"#ef4444"},
+  ];
+  const counts={1:0,2:0,3:0,4:0};
+  records.forEach(r=>{if(r.emotion&&counts[r.emotion]!==undefined)counts[r.emotion]++;});
   const total=Object.values(counts).reduce((a,b)=>a+b,0);
-  if(!total) return <div className="no-data">尚無活力記錄 💫</div>;
-  const COLS={"🌟":"#f59e0b","😊":"#22c55e","😴":"#818cf8","😟":"#f472b6","🚨":"#ef4444"};
+  if(!total) return <div className="no-data">尚無情緒狀態記錄 💫</div>;
   const CX=75,CY=75,R=60,IR=36;
   let sa=-Math.PI/2;
-  const slices=VITALITY.map(v=>{
-    const val=counts[v.v], angle=(val/total)*Math.PI*2;
-    const s={v:v.v,label:v.label,val,angle,sa,color:COLS[v.v]};
+  const slices=EMOTION_LEVELS.map(lv=>{
+    const val=counts[lv.n], angle=(val/total)*Math.PI*2;
+    const s={...lv,val,angle,sa};
     sa+=angle; return s;
   }).filter(s=>s.val>0);
   const arc=(sa,ea,r,ir)=>{
@@ -1633,18 +1660,60 @@ function VitalityDonut({ records, color }) {
     <div style={{display:"flex",alignItems:"center",gap:14}}>
       <svg viewBox="0 0 150 150" style={{width:120,height:120,flexShrink:0}}>
         {slices.map((s,i)=><path key={i} d={arc(s.sa,s.sa+s.angle,R,IR)} fill={s.color}/>)}
-        <text x={CX} y={CY-5} textAnchor="middle" fontSize="24" fill="#0f2d52">{slices.sort((a,b)=>b.val-a.val)[0]?.v}</text>
-        <text x={CX} y={CY+13} textAnchor="middle" fontSize="11" fontWeight="700" fill="#80aad4">{total} 天</text>
       </svg>
-      <div style={{flex:1}}>
-        {slices.sort((a,b)=>b.val-a.val).map(s=>(
-          <div key={s.v} style={{display:"flex",alignItems:"center",gap:7,marginBottom:6}}>
-            <span style={{width:10,height:10,borderRadius:"50%",background:s.color,flexShrink:0,display:"inline-block"}}/>
-            <span style={{fontSize:12,fontWeight:700,color:"#3a6fa8",flex:1}}>{s.v} {s.label}</span>
-            <span style={{fontSize:13,fontWeight:900,color:"#0f2d52"}}>{Math.round(s.val/total*100)}%</span>
+      <div style={{flex:1,display:"flex",flexDirection:"column",gap:6}}>
+        {EMOTION_LEVELS.filter(lv=>counts[lv.n]>0).map(lv=>(
+          <div key={lv.n} style={{display:"flex",alignItems:"center",gap:6}}>
+            <span style={{width:10,height:10,borderRadius:50,background:lv.color,flexShrink:0}}/>
+            <span style={{fontSize:12,fontWeight:700,color:"var(--text2)",flex:1}}>{lv.label}</span>
+            <span style={{fontSize:13,fontWeight:900,color:lv.color}}>{counts[lv.n]}</span>
+            <span style={{fontSize:11,color:"var(--text3)"}}>{Math.round(counts[lv.n]/total*100)}%</span>
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+function FoodEatenSplit({ records }) {
+  // 統計每個食物：吃完(✓)次數 vs 沒吃(✕)次數
+  const stats = {};
+  records.forEach(r=>{
+    (r.wets||[]).forEach(w=>{
+      const f = w.food?.trim();
+      if (!f || !w.eaten) return;
+      if (!stats[f]) stats[f] = {done:0, skip:0, partial:0, total:0};
+      stats[f].total++;
+      if (w.eaten==="✓") stats[f].done++;
+      else if (w.eaten==="✕") stats[f].skip++;
+      else stats[f].partial++;
+    });
+  });
+  const entries = Object.entries(stats).filter(([,s])=>s.total>=2); // 至少吃過2次才有參考價值
+  const finished = entries.filter(([,s])=>s.done/s.total>=0.6).sort((a,b)=>(b[1].done/b[1].total)-(a[1].done/a[1].total)).slice(0,6);
+  const rejected = entries.filter(([,s])=>s.skip/s.total>=0.4).sort((a,b)=>(b[1].skip/b[1].total)-(a[1].skip/a[1].total)).slice(0,6);
+
+  if (!entries.length) return <div className="no-data">尚無足夠的飲食記錄（需至少吃過2次）🐟</div>;
+
+  return (
+    <div>
+      <div style={{fontSize:11,fontWeight:800,color:"#16a34a",letterSpacing:".4px",textTransform:"uppercase",marginBottom:8}}>✅ 通常會吃光</div>
+      {!finished.length && <div className="no-data" style={{padding:"10px 0"}}>尚無明顯偏好的食物</div>}
+      {finished.map(([food,s])=>(
+        <div key={food} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 0",borderBottom:"1px solid var(--border)"}}>
+          <span style={{flex:1,fontSize:12,fontWeight:700,color:"var(--text)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{food}</span>
+          <span style={{fontSize:11,fontWeight:800,color:"#16a34a",flexShrink:0}}>{s.done}/{s.total} 次吃完</span>
+        </div>
+      ))}
+
+      <div style={{fontSize:11,fontWeight:800,color:"#dc2626",letterSpacing:".4px",textTransform:"uppercase",marginTop:18,marginBottom:8}}>❌ 通常不吃 / 拒食</div>
+      {!rejected.length && <div className="no-data" style={{padding:"10px 0"}}>沒有明顯拒食的食物 🎉</div>}
+      {rejected.map(([food,s])=>(
+        <div key={food} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 0",borderBottom:"1px solid var(--border)"}}>
+          <span style={{flex:1,fontSize:12,fontWeight:700,color:"var(--text)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{food}</span>
+          <span style={{fontSize:11,fontWeight:800,color:"#dc2626",flexShrink:0}}>{s.skip}/{s.total} 次沒吃</span>
+        </div>
+      ))}
     </div>
   );
 }
@@ -1856,16 +1925,38 @@ function AnalyticsPage({ catId, color }) {
             </>);
           })() : <div className="no-data">尚無體重記錄 ⚖️</div>}
         </div>
+        <div className="an-card">
+          <div className="an-card-title">🫁 休息時呼吸次數</div>
+          {(()=>{
+            const rrAll = filtered.filter(r=>r.restingRR).map(r=>parseInt(r.restingRR));
+            if (!rrAll.length) return <div className="no-data">尚無呼吸次數記錄 🫁</div>;
+            const mn=Math.min(...rrAll), mx=Math.max(...rrAll), avg=rrAll.reduce((a,b)=>a+b,0)/rrAll.length;
+            const highDays = rrAll.filter(v=>v>30).length;
+            return (<>
+              <div className="stat-row" style={{marginBottom:12}}>
+                <div className="stat-box"><span className="stat-n" style={{color:"#3b82f6"}}>{mn}</span><span className="stat-l">最低 次/分</span></div>
+                <div className="stat-box"><span className="stat-n" style={{color: avg>30?"#ef4444":color}}>{avg.toFixed(1)}</span><span className="stat-l">平均 次/分</span></div>
+                <div className="stat-box"><span className="stat-n" style={{color:"#f97316"}}>{mx}</span><span className="stat-l">最高 次/分</span></div>
+              </div>
+              {highDays>0 && (
+                <div style={{padding:"8px 12px",background:"#fef2f2",borderRadius:8,fontSize:12,fontWeight:700,color:"#dc2626",textAlign:"center"}}>
+                  ⚠️ 有 {highDays} 天超過 30 次/分鐘，建議留意心臟健康
+                </div>
+              )}
+            </>);
+          })()}
+        </div>
       </>}
 
       {!loading && subTab==="food" && <>
         <div className="an-card"><div className="an-card-title">✅ 濕食吃完率</div><EatenChart records={filtered} color={color}/></div>
+        <div className="an-card"><div className="an-card-title">🍽 食物接受度分析</div><FoodEatenSplit records={filtered}/></div>
         <div className="an-card"><div className="an-card-title">🏆 最常吃的濕食 Top 6</div><FoodRanking records={filtered} color={color}/></div>
         <div className="an-card"><div className="an-card-title">😋 吃飯態度分布</div><AttitudeChart records={filtered}/></div>
       </>}
 
       {!loading && subTab==="health" && <>
-        <div className="an-card"><div className="an-card-title">✨ 活力狀態分布</div><VitalityDonut records={filtered} color={color}/></div>
+        <div className="an-card"><div className="an-card-title">😿 情緒狀態分布</div><EmotionDonut records={filtered} color={color}/></div>
         <div className="an-card"><div className="an-card-title">🚨 問題狀況頻率</div><IssueHeatmap records={filtered} color={color}/></div>
         <div className="an-card">
           <div className="an-card-title">📅 問題狀況統計</div>
@@ -2013,6 +2104,7 @@ function HistoryPage({ cat, catId, color, onClose }) {
             {expanded===r.date&&(
               <div className="hexpand">
                 {r.weight&&<div className="hexp-row"><span className="hexp-k">體重</span><span>{r.weight} kg</span></div>}
+                {r.restingRR&&<div className="hexp-row"><span className="hexp-k">休息呼吸</span><span style={{color:parseInt(r.restingRR)>30?"#dc2626":"inherit"}}>{r.restingRR} 次/分</span></div>}
                 {(r.activity||r.reactivity||r.emotion)&&<div className="hexp-row"><span className="hexp-k">行為評估</span><span>{[r.activity&&`活動 ${r.activity}`,r.reactivity&&`反應 ${r.reactivity}`,r.emotion&&`情緒 ${r.emotion}`].filter(Boolean).join(" · ")}</span></div>}
                 {r.wets?.length>0&&<div className="hexp-row"><span className="hexp-k">濕食</span><span>{r.wets.map(w=>`${w.food}${w.weight?` ${w.weight}g`:""}${w.texture?` · ${w.texture}`:""}${w.eaten?` · ${w.eaten}`:""}`).join("；")}</span></div>}
                 {r.drys?.length>0&&<div className="hexp-row"><span className="hexp-k">飼料</span><span>{r.drys.map(d=>d.food).join("、")}</span></div>}
@@ -2183,11 +2275,11 @@ function FmpiPage({ catId, color, catName }) {
   return (
     <div className="fmpi-page">
       {/* Tabs */}
-      <div className="view-tabs" style={{margin:"0 0 14px"}}>
-        <button className={`view-tab${tab==="form"?" active":""}`}
+      <div className="sub-view-tabs" style={{margin:"0 0 14px"}}>
+        <button className={`sub-view-tab${tab==="form"?" active":""}`}
           style={tab==="form"?{background:color,boxShadow:`0 4px 12px ${color}55`}:{}}
           onClick={()=>setTab("form")}>填寫評估</button>
-        <button className={`view-tab${tab==="history"?" active":""}`}
+        <button className={`sub-view-tab${tab==="history"?" active":""}`}
           style={tab==="history"?{background:color,boxShadow:`0 4px 12px ${color}55`}:{}}
           onClick={()=>setTab("history")}>歷史記錄</button>
       </div>
@@ -2377,11 +2469,11 @@ function HhhhhmmPage({ catId, color, catName }) {
 
   return (
     <div className="fmpi-page">
-      <div className="view-tabs" style={{margin:"0 0 14px"}}>
-        <button className={`view-tab${tab==="form"?" active":""}`}
+      <div className="sub-view-tabs" style={{margin:"0 0 14px"}}>
+        <button className={`sub-view-tab${tab==="form"?" active":""}`}
           style={tab==="form"?{background:color,boxShadow:`0 4px 12px ${color}55`}:{}}
           onClick={()=>setTab("form")}>填寫評估</button>
-        <button className={`view-tab${tab==="history"?" active":""}`}
+        <button className={`sub-view-tab${tab==="history"?" active":""}`}
           style={tab==="history"?{background:color,boxShadow:`0 4px 12px ${color}55`}:{}}
           onClick={()=>setTab("history")}>歷史記錄</button>
       </div>
@@ -2543,6 +2635,7 @@ function BcsPage({ catId, color, catName }) {
   const [history, setHistory] = React.useState([]);
   const [tab, setTab] = React.useState("form");
   const [note, setNote] = React.useState("");
+  const [photos, setPhotos] = React.useState([]);
 
   React.useEffect(()=>{
     (async()=>{
@@ -2562,23 +2655,24 @@ function BcsPage({ catId, color, catName }) {
   const idealWeight = calcIdealWeight(currentWeight, bcs);
 
   const save = async () => {
-    const entry = { date:todayStr(), bcs, currentWeight, idealWeight, note };
+    const entry = { date:todayStr(), bcs, currentWeight, idealWeight, note, photos };
     const newHistory = [entry, ...history].slice(0,24);
     await setStorage(`bcs:${catId}`, newHistory);
     setHistory(newHistory);
     setBcs(null);
     setNote("");
+    setPhotos([]);
     setTab("history");
     alert(`✅ BCS 已儲存！\n${catName} 本次評分：${bcs}（${grade?.label}）${idealWeight?`\n理想體重約 ${idealWeight} kg`:""}`);
   };
 
   return (
     <div className="fmpi-page">
-      <div className="view-tabs" style={{margin:"0 0 14px"}}>
-        <button className={`view-tab${tab==="form"?" active":""}`}
+      <div className="sub-view-tabs" style={{margin:"0 0 14px"}}>
+        <button className={`sub-view-tab${tab==="form"?" active":""}`}
           style={tab==="form"?{background:color,boxShadow:`0 4px 12px ${color}55`}:{}}
           onClick={()=>setTab("form")}>填寫評估</button>
-        <button className={`view-tab${tab==="history"?" active":""}`}
+        <button className={`sub-view-tab${tab==="history"?" active":""}`}
           style={tab==="history"?{background:color,boxShadow:`0 4px 12px ${color}55`}:{}}
           onClick={()=>setTab("history")}>歷史記錄</button>
       </div>
@@ -2593,19 +2687,29 @@ function BcsPage({ catId, color, catName }) {
           {history.map((h,i)=>{
             const g = BCS_GRADES.find(g=>g.score===h.bcs)||BCS_GRADES[4];
             return (
-              <div key={i} className="fmpi-history-item">
-                <div style={{flex:1}}>
-                  <div style={{fontSize:13,fontWeight:800,color:"var(--text)"}}>{h.date}</div>
-                  <div style={{display:"flex",gap:12,marginTop:4,flexWrap:"wrap"}}>
-                    {h.currentWeight && <span style={{fontSize:12,fontWeight:600,color:"var(--text2)"}}>實際體重：{h.currentWeight} kg</span>}
-                    {h.idealWeight && <span style={{fontSize:12,fontWeight:700,color:"#3b82f6"}}>理想體重：{h.idealWeight} kg</span>}
+              <div key={i} className="fmpi-history-item" style={{flexDirection:"column",alignItems:"stretch"}}>
+                <div style={{display:"flex",alignItems:"center",gap:12}}>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:13,fontWeight:800,color:"var(--text)"}}>{h.date}</div>
+                    <div style={{display:"flex",gap:12,marginTop:4,flexWrap:"wrap"}}>
+                      {h.currentWeight && <span style={{fontSize:12,fontWeight:600,color:"var(--text2)"}}>實際體重：{h.currentWeight} kg</span>}
+                      {h.idealWeight && <span style={{fontSize:12,fontWeight:700,color:"#3b82f6"}}>理想體重：{h.idealWeight} kg</span>}
+                    </div>
+                    {h.note && <div style={{fontSize:11,color:"var(--text3)",marginTop:2}}>{h.note}</div>}
                   </div>
-                  {h.note && <div style={{fontSize:11,color:"var(--text3)",marginTop:2}}>{h.note}</div>}
+                  <div style={{textAlign:"center",flexShrink:0}}>
+                    <div style={{fontSize:28,fontWeight:900,color:g.color}}>{h.bcs}</div>
+                    <div style={{fontSize:10,fontWeight:700,color:g.color,background:g.bg,padding:"2px 8px",borderRadius:50,whiteSpace:"nowrap"}}>{g.label}</div>
+                  </div>
                 </div>
-                <div style={{textAlign:"center",flexShrink:0}}>
-                  <div style={{fontSize:28,fontWeight:900,color:g.color}}>{h.bcs}</div>
-                  <div style={{fontSize:10,fontWeight:700,color:g.color,background:g.bg,padding:"2px 8px",borderRadius:50,whiteSpace:"nowrap"}}>{g.label}</div>
-                </div>
+                {h.photos?.length>0 && (
+                  <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:10}}>
+                    {h.photos.map((p,pi)=>(
+                      <img key={pi} src={p.base64} alt="體態照片"
+                        style={{width:70,height:70,objectFit:"cover",borderRadius:8,border:"1.5px solid var(--border)"}}/>
+                    ))}
+                  </div>
+                )}
               </div>
             );
           })}
@@ -2711,6 +2815,60 @@ function BcsPage({ catId, color, catName }) {
             ))}
           </div>
 
+          {/* Photo upload */}
+          <div className="fmpi-section">
+            <div className="fmpi-section-title">體態照片（側面 / 俯視，可協助比對追蹤）</div>
+            <div style={{display:"flex",gap:6,marginBottom:10}}>
+              <button className="add-btn add-s" style={{borderColor:"#3b82f6",color:"#3b82f6"}} onClick={()=>{
+                const input = document.createElement("input");
+                input.type = "file";
+                input.accept = "image/*";
+                input.capture = "environment";
+                input.onchange = (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  const reader = new FileReader();
+                  reader.onload = (ev) => {
+                    setPhotos(p=>[...p, { base64: ev.target.result, filename: file.name }]);
+                  };
+                  reader.readAsDataURL(file);
+                };
+                input.click();
+              }}>📷 拍照</button>
+              <button className="add-btn add-s" style={{borderColor:"#8b5cf6",color:"#8b5cf6"}} onClick={()=>{
+                const input = document.createElement("input");
+                input.type = "file";
+                input.accept = "image/*";
+                input.onchange = (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  const reader = new FileReader();
+                  reader.onload = (ev) => {
+                    setPhotos(p=>[...p, { base64: ev.target.result, filename: file.name }]);
+                  };
+                  reader.readAsDataURL(file);
+                };
+                input.click();
+              }}>🖼️ 從相簿選擇</button>
+            </div>
+            {photos.length>0 && (
+              <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:4}}>
+                {photos.map((p,i)=>(
+                  <div key={i} style={{position:"relative",width:90,height:90}}>
+                    <img src={p.base64} alt="體態照片"
+                      style={{width:90,height:90,objectFit:"cover",borderRadius:10,border:"1.5px solid var(--border)"}}/>
+                    <button onClick={()=>setPhotos(ps=>ps.filter((_,j)=>j!==i))}
+                      style={{
+                        position:"absolute",top:-6,right:-6,width:22,height:22,borderRadius:"50%",
+                        background:"#ef4444",color:"white",border:"2px solid white",
+                        fontSize:11,fontWeight:900,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"
+                      }}>✕</button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           <div style={{marginBottom:12}}>
             <span className="field-label">備註</span>
             <textarea className="inp" value={note} onChange={e=>setNote(e.target.value)} rows={2} placeholder="觸診觀察補充、外觀描述…"/>
@@ -2775,11 +2933,11 @@ function McsPage({ catId, color, catName }) {
 
   return (
     <div className="fmpi-page">
-      <div className="view-tabs" style={{margin:"0 0 14px"}}>
-        <button className={`view-tab${tab==="form"?" active":""}`}
+      <div className="sub-view-tabs" style={{margin:"0 0 14px"}}>
+        <button className={`sub-view-tab${tab==="form"?" active":""}`}
           style={tab==="form"?{background:color,boxShadow:`0 4px 12px ${color}55`}:{}}
           onClick={()=>setTab("form")}>填寫評估</button>
-        <button className={`view-tab${tab==="history"?" active":""}`}
+        <button className={`sub-view-tab${tab==="history"?" active":""}`}
           style={tab==="history"?{background:color,boxShadow:`0 4px 12px ${color}55`}:{}}
           onClick={()=>setTab("history")}>歷史記錄</button>
       </div>
@@ -3194,6 +3352,30 @@ function CatTab({ meta }) {
                   {diff!==null&&<span className={`diff-pill ${diff>0?"diff-up":diff<0?"diff-dn":"diff-eq"}`}>{diff>0?"+":""}{diff} kg</span>}
                 </div>
               </div>
+              <div className="field-group">
+                <div style={{display:"flex",alignItems:"baseline",justifyContent:"space-between",marginBottom:6}}>
+                  <span className="field-label" style={{marginBottom:0}}>休息時呼吸次數</span>
+                  <span style={{fontSize:10,fontWeight:600,color:"var(--text3)"}}>正常範圍 20–30 次/分鐘</span>
+                </div>
+                <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                  <div className="wt-wrap">
+                    <input type="number" className="inp wt-inp" value={daily.restingRR}
+                      onChange={e=>up("restingRR",e.target.value)} placeholder="例：24"/>
+                    <span className="wt-unit">次/分</span>
+                  </div>
+                  {daily.restingRR && (
+                    <span className="diff-pill" style={{
+                      background: parseInt(daily.restingRR)>30 ? "#fef2f2" : "#f0fdf4",
+                      color: parseInt(daily.restingRR)>30 ? "#dc2626" : "#16a34a",
+                    }}>
+                      {parseInt(daily.restingRR)>30 ? "偏高" : "正常"}
+                    </span>
+                  )}
+                </div>
+                <div style={{fontSize:10,fontWeight:500,color:"var(--text3)",marginTop:5,lineHeight:1.4}}>
+                  建議在貓咪熟睡或安靜休息時，數 15 秒胸腹起伏次數再乘以 4。持續高於 30 次/分鐘建議就診評估心臟狀況。
+                </div>
+              </div>
               <div className="divider"/>
               {BEHAVIOR_DIMS.map(dim=>(
                 <div key={dim.key} className="behavior-dim">
@@ -3582,7 +3764,7 @@ function CatTab({ meta }) {
               <div>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
                   <span className="field-label" style={{marginBottom:0}}>📎 媒體紀錄</span>
-                  <div style={{display:"flex",gap:6}}>
+                  <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
                     <button className="add-btn add-s" style={{borderColor:"#3b82f6",color:"#3b82f6"}} onClick={()=>{
                       const input = document.createElement("input");
                       input.type = "file";
@@ -3608,6 +3790,31 @@ function CatTab({ meta }) {
                       };
                       input.click();
                     }}>📷 拍照</button>
+                    <button className="add-btn add-s" style={{borderColor:"#8b5cf6",color:"#8b5cf6"}} onClick={()=>{
+                      const input = document.createElement("input");
+                      input.type = "file";
+                      input.accept = "image/*,video/*";
+                      // 不設定 capture，讓使用者可選擇相簿或檔案
+                      input.onchange = async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        const reader = new FileReader();
+                        reader.onload = (ev) => {
+                          const base64 = ev.target.result;
+                          const isVideo = file.type.startsWith("video/");
+                          setDirty(true);
+                          setDaily(p=>({...p, issueLinks:[...(p.issueLinks||[]), {
+                            label: isVideo ? "🎥 影片" : "📷 照片",
+                            url: "",
+                            base64,
+                            filename: file.name,
+                            size: file.size,
+                          }]}));
+                        };
+                        reader.readAsDataURL(file);
+                      };
+                      input.click();
+                    }}>🖼️ 從相簿選擇</button>
                     <button className="add-btn add-s" onClick={()=>{ setDirty(true); setDaily(p=>({...p,issueLinks:[...(p.issueLinks||[]),{label:"",url:"",base64:null}]})); }}>🔗 連結</button>
                   </div>
                 </div>
