@@ -574,6 +574,70 @@ const css = `
 }
 
 /* ── Date nav ── */
+/* ── Calendar picker ── */
+.cal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(10,20,50,0.4);
+  backdrop-filter: blur(4px);
+  z-index: 200;
+  display: flex; align-items: flex-end; justify-content: center;
+}
+.cal-sheet {
+  background: white; border-radius: 24px 24px 0 0;
+  width: 100%; max-width: 480px;
+  padding: 20px 16px 32px;
+  animation: sheet-up .25s cubic-bezier(.34,1.3,.64,1);
+}
+@keyframes sheet-up {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+.cal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px;
+}
+.cal-month-title { font-size: 16px; font-weight: 900; color: var(--text); }
+.cal-nav-btn {
+  width: 36px; height: 36px; border-radius: 50%;
+  border: none; background: #f1f5f9; cursor: pointer;
+  font-size: 18px; display: flex; align-items: center; justify-content: center;
+  color: var(--text2);
+}
+.cal-weekdays {
+  display: grid; grid-template-columns: repeat(7,1fr);
+  margin-bottom: 6px;
+}
+.cal-weekday {
+  text-align: center; font-size: 11px; font-weight: 700;
+  color: var(--text3); padding: 4px 0;
+}
+.cal-days {
+  display: grid; grid-template-columns: repeat(7,1fr);
+  gap: 4px;
+}
+.cal-day {
+  aspect-ratio: 1; border-radius: 50%;
+  border: none; background: transparent;
+  cursor: pointer; font-family: var(--font);
+  font-size: 13px; font-weight: 600;
+  color: var(--text2);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  position: relative; transition: all .12s;
+}
+.cal-day:hover { background: rgba(41,128,212,0.1); }
+.cal-day.today { font-weight: 900; color: var(--accent); }
+.cal-day.selected { background: var(--accent); color: white; font-weight: 900; }
+.cal-day.selected .cal-dot { background: white; }
+.cal-day.empty { cursor: default; }
+.cal-day.other-month { color: #d1d5db; }
+.cal-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--accent); position: absolute;
+  bottom: 3px;
+}
+.cal-day.selected .cal-dot { background: rgba(255,255,255,0.8); }
+
 .date-nav {
   display: flex; align-items:center; gap:8px;
   padding: 14px 0 8px;
@@ -1837,14 +1901,27 @@ function AttitudeChart({ records }) {
 function AnalyticsPage({ catId, color }) {
   const [records, setRecords] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
+  const [rangeMode, setRangeMode] = React.useState("range"); // "range" | "month"
   const [range, setRange] = React.useState(30);
+  const [selectedMonth, setSelectedMonth] = React.useState(""); // "YYYY-MM"
   const [subTab, setSubTab] = React.useState("overview");
 
   React.useEffect(()=>{
     (async()=>{ setLoading(true); const all=await loadAllRecords(catId); setRecords(all); setLoading(false); })();
   },[catId]);
 
-  const filtered = range===0 ? records : records.slice(-range);
+  // 取得所有有紀錄的月份
+  const availableMonths = [...new Set(records.map(r=>r.date.slice(0,7)))].sort().reverse();
+
+  // 初始化預設月份
+  React.useEffect(()=>{
+    if (availableMonths.length && !selectedMonth) setSelectedMonth(availableMonths[0]);
+  },[availableMonths.length]);
+
+  const filtered = rangeMode==="month"
+    ? records.filter(r=>r.date.startsWith(selectedMonth))
+    : range===0 ? records : records.slice(-range);
+
   const totalDays=filtered.length;
   const wsAll=filtered.filter(r=>r.weight).map(r=>parseFloat(r.weight));
   const avgW=wsAll.length?(wsAll.reduce((a,b)=>a+b,0)/wsAll.length).toFixed(2):"—";
@@ -1852,6 +1929,13 @@ function AnalyticsPage({ catId, color }) {
 
   const subTabs=[{id:"overview",l:"📊 總覽"},{id:"weight",l:"⚖️ 體重"},{id:"food",l:"🐟 飲食"},{id:"health",l:"⚠️ 健康"}];
   const ranges=[{v:7,l:"7天"},{v:14,l:"14天"},{v:30,l:"30天"},{v:0,l:"全部"}];
+
+  // Format month display
+  const fmtMonth = (ym) => {
+    if (!ym) return "";
+    const [y,m] = ym.split("-");
+    return `${y}年${parseInt(m)}月`;
+  };
 
   return (
     <div className="page-analytics">
@@ -1862,13 +1946,44 @@ function AnalyticsPage({ catId, color }) {
             onClick={()=>setSubTab(t.id)}>{t.l}</button>
         ))}
       </div>
-      <div className="an-range">
-        {ranges.map(r=>(
-          <button key={r.v} className={`an-range-btn${range===r.v?" active":""}`}
-            style={range===r.v?{background:color}:{}}
-            onClick={()=>setRange(r.v)}>{r.l}</button>
-        ))}
+
+      {/* Range mode toggle */}
+      <div style={{display:"flex",gap:6,padding:"10px 14px 4px"}}>
+        <button onClick={()=>setRangeMode("range")}
+          style={{flex:1,padding:"8px",borderRadius:50,border:`2px solid ${rangeMode==="range"?color:"rgba(41,128,212,0.2)"}`,background:rangeMode==="range"?`${color}15`:"white",color:rangeMode==="range"?color:"var(--text2)",fontFamily:"var(--font)",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+          📅 天數篩選
+        </button>
+        <button onClick={()=>setRangeMode("month")}
+          style={{flex:1,padding:"8px",borderRadius:50,border:`2px solid ${rangeMode==="month"?color:"rgba(41,128,212,0.2)"}`,background:rangeMode==="month"?`${color}15`:"white",color:rangeMode==="month"?color:"var(--text2)",fontFamily:"var(--font)",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+          🗓️ 月份篩選
+        </button>
       </div>
+
+      {rangeMode==="range" && (
+        <div className="an-range">
+          {ranges.map(r=>(
+            <button key={r.v} className={`an-range-btn${range===r.v?" active":""}`}
+              style={range===r.v?{background:color}:{}}
+              onClick={()=>setRange(r.v)}>{r.l}</button>
+          ))}
+        </div>
+      )}
+
+      {rangeMode==="month" && (
+        <div style={{padding:"6px 14px 2px",display:"flex",gap:6,flexWrap:"wrap"}}>
+          {availableMonths.length===0 && <span style={{fontSize:12,color:"var(--text3)"}}>尚無紀錄</span>}
+          {availableMonths.map(ym=>(
+            <button key={ym} onClick={()=>setSelectedMonth(ym)}
+              style={{
+                padding:"6px 14px",borderRadius:50,fontSize:12,fontWeight:700,cursor:"pointer",
+                border:`2px solid ${selectedMonth===ym?color:"rgba(41,128,212,0.2)"}`,
+                background:selectedMonth===ym?`${color}15`:"white",
+                color:selectedMonth===ym?color:"var(--text2)",
+                fontFamily:"var(--font)",transition:"all .15s",
+              }}>{fmtMonth(ym)}</button>
+          ))}
+        </div>
+      )}
 
       {loading && <div className="no-data" style={{paddingTop:40}}>載入中…</div>}
 
@@ -2029,13 +2144,13 @@ function HistoryPage({ cat, catId, color, onClose }) {
         ];
         const found = {};
         for (const prefix of prefixes) {
-          const result = await (async()=>{ const _p=prefix; const _k=[]; for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k&&k.startsWith(_p))_k.push(k); } return {keys:_k}; })();
+          const result = await (async()=>{ const _k=[]; for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k&&k.startsWith(prefix))_k.push(k); } return {keys:_k}; })();
           if (result?.keys?.length) found[prefix] = result.keys;
         }
         console.log("=== STORAGE SCAN RESULT ===");
         console.log(JSON.stringify(found, null, 2));
         // Also try listing with empty string to get ALL keys
-        const allResult = await (async()=>{ const _p=""; const _k=[]; for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k&&k.startsWith(_p))_k.push(k); } return {keys:_k}; })();
+        const allResult = await (async()=>{ const _k=[]; for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k)_k.push(k); } return {keys:_k}; })();
         console.log("=== ALL KEYS ===");
         console.log(JSON.stringify(allResult?.keys));
       } catch(e){ console.log("scan error", e); }
@@ -2049,7 +2164,7 @@ function HistoryPage({ cat, catId, color, onClose }) {
     <div className="hist-page">
       <div className="hist-header">
         <button className="hist-back" onClick={onClose}>←</button>
-        <span className="hist-title">{cat.name||catId==="sakura"?"櫻":"樨"} 的所有紀錄</span>
+        <span className="hist-title">{cat.name || (catId==="sakura"?"櫻":"樨")} 的所有紀錄</span>
         <span style={{fontSize:13,fontWeight:700,color:"#80aad4",marginLeft:"auto"}}>{records.length} 筆</span>
       </div>
       <div className="hist-list">
@@ -3098,6 +3213,73 @@ function McsPage({ catId, color, catName }) {
   );
 }
 
+// ─── Calendar Picker ──────────────────────────────────────────────────────────
+function CalendarPicker({ value, onChange, recordDates, onClose, color }) {
+  const today = todayStr();
+  const [viewYear, setViewYear] = React.useState(()=> parseInt(value.slice(0,4)));
+  const [viewMonth, setViewMonth] = React.useState(()=> parseInt(value.slice(5,7))-1);
+
+  const recordSet = new Set(recordDates||[]);
+
+  const prevMonth = () => {
+    if (viewMonth===0) { setViewMonth(11); setViewYear(y=>y-1); }
+    else setViewMonth(m=>m-1);
+  };
+  const nextMonth = () => {
+    if (viewMonth===11) { setViewMonth(0); setViewYear(y=>y+1); }
+    else setViewMonth(m=>m+1);
+  };
+
+  const firstDay = new Date(viewYear, viewMonth, 1).getDay();
+  const daysInMonth = new Date(viewYear, viewMonth+1, 0).getDate();
+  const weekdays = ["日","一","二","三","四","五","六"];
+
+  const cells = [];
+  for (let i=0; i<firstDay; i++) cells.push(null);
+  for (let d=1; d<=daysInMonth; d++) cells.push(d);
+
+  const fmt = (d) => {
+    const m = String(viewMonth+1).padStart(2,"0");
+    const dd = String(d).padStart(2,"0");
+    return `${viewYear}-${m}-${dd}`;
+  };
+
+  return (
+    <div className="cal-overlay" onClick={onClose}>
+      <div className="cal-sheet" onClick={e=>e.stopPropagation()}>
+        <div className="cal-header">
+          <button className="cal-nav-btn" onClick={prevMonth}>‹</button>
+          <span className="cal-month-title">{viewYear} 年 {viewMonth+1} 月</span>
+          <button className="cal-nav-btn" onClick={nextMonth}>›</button>
+        </div>
+        <div className="cal-weekdays">
+          {weekdays.map(w=><div key={w} className="cal-weekday">{w}</div>)}
+        </div>
+        <div className="cal-days">
+          {cells.map((d,i)=> d===null
+            ? <div key={`e${i}`} className="cal-day empty"/>
+            : (()=>{
+                const dateStr = fmt(d);
+                const isToday = dateStr===today;
+                const isSelected = dateStr===value;
+                const hasRecord = recordSet.has(dateStr);
+                return (
+                  <button key={d} className={`cal-day${isToday?" today":""}${isSelected?" selected":""}`}
+                    style={isSelected?{background:color}:{}}
+                    onClick={()=>{ onChange(dateStr); onClose(); }}>
+                    {d}
+                    {hasRecord && !isSelected && <span className="cal-dot" style={{background:color}}/>}
+                    {hasRecord && isSelected && <span className="cal-dot"/>}
+                  </button>
+                );
+              })()
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Cat Tab ──────────────────────────────────────────────────────────────────
 function CatTab({ meta }) {
   const { id:catId, color, colorLight, colorMid, grad, profileGrad } = meta;
@@ -3112,9 +3294,17 @@ function CatTab({ meta }) {
   const [dirty, setDirty] = React.useState(false);
   const [showToast, setShowToast] = React.useState(false);
   const [showMenu, setShowMenu] = React.useState(false);
+  const [showCal, setShowCal] = React.useState(false);
+  const [recordDates, setRecordDates] = React.useState([]);
 
   React.useEffect(()=>{
-    (async()=>{const c=await getStorage(`cat:${catId}`);if(c)setCat(c);})();
+    (async()=>{
+      const c=await getStorage(`cat:${catId}`);
+      if(c)setCat(c);
+      // 載入所有有紀錄的日期
+      const all = await loadAllRecords(catId);
+      setRecordDates(all.map(r=>r.date));
+    })();
   },[catId]);
 
   React.useEffect(()=>{
@@ -3133,6 +3323,7 @@ function CatTab({ meta }) {
   const save=async()=>{
     await setStorage(`daily:${catId}:${date}`,daily);
     await setStorage(`cat:${catId}`,cat);
+    setRecordDates(d=> d.includes(date) ? d : [...d, date]);
     setSaved(true); setDirty(false);
     // 自動備份在背景執行，不阻塞 UI
     setTimeout(()=>{
@@ -3345,9 +3536,21 @@ function CatTab({ meta }) {
       {view==="record"&&(
         <div className="page">
           {/* Date nav */}
+          {showCal && (
+            <CalendarPicker
+              value={date}
+              onChange={setDate}
+              recordDates={recordDates}
+              onClose={()=>setShowCal(false)}
+              color={color}
+            />
+          )}
           <div className="date-nav">
             <button className="dnav-btn" onClick={()=>{const d=new Date(date);d.setDate(d.getDate()-1);setDate(d.toISOString().slice(0,10));}}>‹</button>
-            <input type="date" className="dnav-inp" value={date} onChange={e=>setDate(e.target.value)}/>
+            <button className="dnav-inp" onClick={()=>setShowCal(true)} style={{cursor:"pointer",textAlign:"center"}}>
+              {date}
+              {recordDates.includes(date) && <span style={{display:"inline-block",width:6,height:6,borderRadius:"50%",background:color,marginLeft:6,verticalAlign:"middle",marginBottom:1}}/>}
+            </button>
             <button className="dnav-btn" onClick={()=>{const d=new Date(date);d.setDate(d.getDate()+1);setDate(d.toISOString().slice(0,10));}}>›</button>
             <button className="today-btn" onClick={()=>setDate(todayStr())}>今天</button>
           </div>
