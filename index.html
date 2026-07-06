@@ -84,6 +84,7 @@ const FOOD_DB = {
     { id:"D09", brand:"Orijen 歐睿健", name:"Six Fish 六種鮮魚 全齡無穀", meat:"沙丁魚28%、鱈魚7%", origin:"加拿大" },
     { id:"D10", brand:"Orijen 歐睿健", name:"鮮雞愛貓 全齡無穀鮮肉", meat:"新鮮雞肉20%", origin:"加拿大" },
     { id:"D11", brand:"Royal Canin 皇家", name:"O30 潔牙保健成貓專用乾糧", meat:"脫水禽肉蛋白、米、玉米、動物脂肪、小麥麩質、蔬菜纖維、水解家禽蛋白、小麥、小麥麵粉、玉米粉、玉米麩質、礦物質、甜菜漿、魚油、大豆油、果寡糖、洋車前子殼及籽", origin:"—" },
+    { id:"D12", brand:"Hill's 希爾思", name:"成貓 雞肉特調食譜（1–6歲）", meat:"雞肉、全穀粒小麥、玉米蛋白粉、全穀粒玉米、雞脂肪、雞肉粉、釀造米、脫水甜菜漿、黃豆粉、雞肝香料、黃豆油、乳酸、魚油", origin:"美國" },
   ],
   supplement: [
     { id:"S01", brand:"骨力勁", name:"Silver Advanced 骨關節保健＋肌力保健", dosage:"1錠/天", note:"膠原蛋白、葡萄糖胺、鯊魚軟骨素" },
@@ -308,7 +309,12 @@ const getStorage = async (key) => {
   catch { return null; }
 };
 const setStorage = async (key, val) => {
-  try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
+  try { localStorage.setItem(key, JSON.stringify(val)); }
+  catch(e) {
+    if (e.name === 'QuotaExceededError' || e.code === 22) {
+      alert("⚠️ 儲存空間不足！\n照片佔用太多空間，請減少照片數量後再試。");
+    }
+  }
 };
 const loadAllRecords = async (catId) => {
   const keys = await (async()=>{ const _p=`daily:${catId}:`; const _k=[]; for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k&&k.startsWith(_p))_k.push(k); } return {keys:_k}; })();
@@ -2136,6 +2142,27 @@ function HistoryPage({ cat, catId, color, onClose }) {
   );
 }
 
+// ─── Image compression helper ─────────────────────────────────────────────────
+const compressImage = (file, maxWidth=800, quality=0.7) => new Promise((resolve, reject) => {
+  const reader = new FileReader();
+  reader.onerror = reject;
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onerror = reject;
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      let w = img.width, h = img.height;
+      if (w > maxWidth) { h = Math.round(h * maxWidth / w); w = maxWidth; }
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, w, h);
+      resolve({ base64: canvas.toDataURL("image/jpeg", quality), filename: file.name });
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+});
+
 // ─── Backup helpers ───────────────────────────────────────────────────────────
 const collectAllData = async () => {
   const all = {};
@@ -2821,32 +2848,25 @@ function BcsPage({ catId, color, catName }) {
             <div style={{display:"flex",gap:6,marginBottom:10}}>
               <button className="add-btn add-s" style={{borderColor:"#3b82f6",color:"#3b82f6"}} onClick={()=>{
                 const input = document.createElement("input");
-                input.type = "file";
-                input.accept = "image/*";
-                input.capture = "environment";
-                input.onchange = (e) => {
-                  const file = e.target.files?.[0];
-                  if (!file) return;
-                  const reader = new FileReader();
-                  reader.onload = (ev) => {
-                    setPhotos(p=>[...p, { base64: ev.target.result, filename: file.name }]);
-                  };
-                  reader.readAsDataURL(file);
+                input.type = "file"; input.accept = "image/*"; input.capture = "environment";
+                input.onchange = async (e) => {
+                  const file = e.target.files?.[0]; if (!file) return;
+                  try {
+                    const compressed = await compressImage(file);
+                    setPhotos(p=>[...p, compressed]);
+                  } catch { alert("照片處理失敗，請重試"); }
                 };
                 input.click();
               }}>📷 拍照</button>
               <button className="add-btn add-s" style={{borderColor:"#8b5cf6",color:"#8b5cf6"}} onClick={()=>{
                 const input = document.createElement("input");
-                input.type = "file";
-                input.accept = "image/*";
-                input.onchange = (e) => {
-                  const file = e.target.files?.[0];
-                  if (!file) return;
-                  const reader = new FileReader();
-                  reader.onload = (ev) => {
-                    setPhotos(p=>[...p, { base64: ev.target.result, filename: file.name }]);
-                  };
-                  reader.readAsDataURL(file);
+                input.type = "file"; input.accept = "image/*";
+                input.onchange = async (e) => {
+                  const file = e.target.files?.[0]; if (!file) return;
+                  try {
+                    const compressed = await compressImage(file);
+                    setPhotos(p=>[...p, compressed]);
+                  } catch { alert("照片處理失敗，請重試"); }
                 };
                 input.click();
               }}>🖼️ 從相簿選擇</button>
@@ -3767,51 +3787,33 @@ function CatTab({ meta }) {
                   <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
                     <button className="add-btn add-s" style={{borderColor:"#3b82f6",color:"#3b82f6"}} onClick={()=>{
                       const input = document.createElement("input");
-                      input.type = "file";
-                      input.accept = "image/*,video/*";
-                      input.capture = "environment";
+                      input.type = "file"; input.accept = "image/*,video/*"; input.capture = "environment";
                       input.onchange = async (e) => {
-                        const file = e.target.files?.[0];
-                        if (!file) return;
-                        const reader = new FileReader();
-                        reader.onload = (ev) => {
-                          const base64 = ev.target.result;
+                        const file = e.target.files?.[0]; if (!file) return;
+                        try {
                           const isVideo = file.type.startsWith("video/");
+                          const result = isVideo
+                            ? await new Promise((res,rej)=>{ const r=new FileReader(); r.onerror=rej; r.onload=ev=>res({base64:ev.target.result,filename:file.name,size:file.size}); r.readAsDataURL(file); })
+                            : await compressImage(file);
                           setDirty(true);
-                          setDaily(p=>({...p, issueLinks:[...(p.issueLinks||[]), {
-                            label: isVideo ? "🎥 影片" : "📷 照片",
-                            url: "",
-                            base64,
-                            filename: file.name,
-                            size: file.size,
-                          }]}));
-                        };
-                        reader.readAsDataURL(file);
+                          setDaily(p=>({...p, issueLinks:[...(p.issueLinks||[]), { label: isVideo?"🎥 影片":"📷 照片", url:"", ...result }]}));
+                        } catch { alert("檔案處理失敗，請重試"); }
                       };
                       input.click();
                     }}>📷 拍照</button>
                     <button className="add-btn add-s" style={{borderColor:"#8b5cf6",color:"#8b5cf6"}} onClick={()=>{
                       const input = document.createElement("input");
-                      input.type = "file";
-                      input.accept = "image/*,video/*";
-                      // 不設定 capture，讓使用者可選擇相簿或檔案
+                      input.type = "file"; input.accept = "image/*,video/*";
                       input.onchange = async (e) => {
-                        const file = e.target.files?.[0];
-                        if (!file) return;
-                        const reader = new FileReader();
-                        reader.onload = (ev) => {
-                          const base64 = ev.target.result;
+                        const file = e.target.files?.[0]; if (!file) return;
+                        try {
                           const isVideo = file.type.startsWith("video/");
+                          const result = isVideo
+                            ? await new Promise((res,rej)=>{ const r=new FileReader(); r.onerror=rej; r.onload=ev=>res({base64:ev.target.result,filename:file.name,size:file.size}); r.readAsDataURL(file); })
+                            : await compressImage(file);
                           setDirty(true);
-                          setDaily(p=>({...p, issueLinks:[...(p.issueLinks||[]), {
-                            label: isVideo ? "🎥 影片" : "📷 照片",
-                            url: "",
-                            base64,
-                            filename: file.name,
-                            size: file.size,
-                          }]}));
-                        };
-                        reader.readAsDataURL(file);
+                          setDaily(p=>({...p, issueLinks:[...(p.issueLinks||[]), { label: isVideo?"🎥 影片":"📷 照片", url:"", ...result }]}));
+                        } catch { alert("檔案處理失敗，請重試"); }
                       };
                       input.click();
                     }}>🖼️ 從相簿選擇</button>
