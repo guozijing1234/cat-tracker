@@ -1,30 +1,4 @@
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="貓咪紀錄">
-  <meta name="theme-color" content="#f3f4f8">
-  <title>櫻 & 樨 飲食紀錄器</title>
-  <link rel="manifest" href="./manifest.json">
-  <link rel="apple-touch-icon" href="./icon-192.png">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-    html, body { height: 100%; background: #f3f4f8; }
-    #root { height: 100%; }
-    button { -webkit-user-select: none; user-select: none; }
-    .bottom-bar { padding-bottom: max(16px, env(safe-area-inset-bottom)) !important; }
-  </style>
-</head>
-<body>
-  <div id="root"></div>
-  <script type="text/babel">
+import { useState, useEffect } from "react";
 
 // ─── Food Database ────────────────────────────────────────────────────────────
 const FOOD_DB = {
@@ -306,11 +280,11 @@ function CatIcon({ catId, size = 32, color }) {
 }
 
 const getStorage = async (key) => {
-  try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; }
+  try { const r = await window.storage.get(key); return r ? JSON.parse(r.value) : null; }
   catch { return null; }
 };
 const setStorage = async (key, val) => {
-  try { localStorage.setItem(key, JSON.stringify(val)); }
+  try { await window.storage.set(key, JSON.stringify(val)); }
   catch(e) {
     if (e.name === 'QuotaExceededError' || e.code === 22) {
       alert("⚠️ 儲存空間不足！\n照片佔用太多空間，請減少照片數量後再試。");
@@ -318,7 +292,7 @@ const setStorage = async (key, val) => {
   }
 };
 const loadAllRecords = async (catId) => {
-  const keys = await (async()=>{ const _p=`daily:${catId}:`; const _k=[]; for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k&&k.startsWith(_p))_k.push(k); } return {keys:_k}; })();
+  const keys = await window.storage.list(`daily:${catId}:`).catch(()=>({keys:[]}));
   const loaded = [];
   for (const k of (keys?.keys||[])) {
     const v = await getStorage(k);
@@ -1902,14 +1876,14 @@ function AttitudeChart({ records }) {
 
 // ─── Analytics Page ────────────────────────────────────────────────────────────
 function AnalyticsPage({ catId, color }) {
-  const [records, setRecords] = React.useState([]);
-  const [loading, setLoading] = React.useState(true);
-  const [rangeMode, setRangeMode] = React.useState("range"); // "range" | "month"
-  const [range, setRange] = React.useState(30);
-  const [selectedMonth, setSelectedMonth] = React.useState(""); // "YYYY-MM"
-  const [subTab, setSubTab] = React.useState("overview");
+  const [records, setRecords] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [rangeMode, setRangeMode] = useState("range"); // "range" | "month"
+  const [range, setRange] = useState(30);
+  const [selectedMonth, setSelectedMonth] = useState(""); // "YYYY-MM"
+  const [subTab, setSubTab] = useState("overview");
 
-  React.useEffect(()=>{
+  useEffect(()=>{
     (async()=>{ setLoading(true); const all=await loadAllRecords(catId); setRecords(all); setLoading(false); })();
   },[catId]);
 
@@ -1917,7 +1891,7 @@ function AnalyticsPage({ catId, color }) {
   const availableMonths = [...new Set(records.map(r=>r.date.slice(0,7)))].sort().reverse();
 
   // 初始化預設月份
-  React.useEffect(()=>{
+  useEffect(()=>{
     if (availableMonths.length && !selectedMonth) setSelectedMonth(availableMonths[0]);
   },[availableMonths.length]);
 
@@ -2097,7 +2071,7 @@ function AnalyticsPage({ catId, color }) {
 
 // ─── Food Picker ──────────────────────────────────────────────────────────────
 function FoodPicker({ type, color, onSelect, onClose }) {
-  const [q, setQ] = React.useState("");
+  const [q, setQ] = useState("");
   const items = FOOD_DB[type]||[];
   const filtered = items.filter(i=>(i.brand+i.name+(i.meat||"")).toLowerCase().includes(q.toLowerCase()));
   const labels={wet:"濕食",dry:"飼料",supplement:"保健品",snack:"零食/肉泥"};
@@ -2132,9 +2106,9 @@ function FoodPicker({ type, color, onSelect, onClose }) {
 
 // ─── History Page ─────────────────────────────────────────────────────────────
 function HistoryPage({ cat, catId, color, onClose }) {
-  const [records, setRecords] = React.useState([]);
-  const [expanded, setExpanded] = React.useState(null);
-  React.useEffect(()=>{
+  const [records, setRecords] = useState([]);
+  const [expanded, setExpanded] = useState(null);
+  useEffect(()=>{
     (async()=>{
       const all = await loadAllRecords(catId);
       setRecords([...all].reverse());
@@ -2147,20 +2121,20 @@ function HistoryPage({ cat, catId, color, onClose }) {
         ];
         const found = {};
         for (const prefix of prefixes) {
-          const result = await (async()=>{ const _k=[]; for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k&&k.startsWith(prefix))_k.push(k); } return {keys:_k}; })();
+          const result = await window.storage.list(prefix).catch(()=>({keys:[]}));
           if (result?.keys?.length) found[prefix] = result.keys;
         }
         console.log("=== STORAGE SCAN RESULT ===");
         console.log(JSON.stringify(found, null, 2));
         // Also try listing with empty string to get ALL keys
-        const allResult = await (async()=>{ const _k=[]; for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k)_k.push(k); } return {keys:_k}; })();
+        const allResult = await window.storage.list("").catch(()=>({keys:[]}));
         console.log("=== ALL KEYS ===");
         console.log(JSON.stringify(allResult?.keys));
       } catch(e){ console.log("scan error", e); }
     })();
   },[catId]);
   const del=async(date)=>{
-    try{localStorage.removeItem(`daily:${catId}:${date}`);}catch{}
+    try{await window.storage.delete(`daily:${catId}:${date}`);}catch{}
     setRecords(r=>r.filter(x=>x.date!==date));
   };
   return (
@@ -2286,7 +2260,7 @@ const collectAllData = async () => {
   const all = {};
   for (const c of [{id:"sakura"},{id:"xi"}]) {
     const catMeta = await getStorage(`cat:${c.id}`);
-    const keys = await (async()=>{ const _p=`daily:${c.id}:`; const _k=[]; for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k&&k.startsWith(_p))_k.push(k); } return {keys:_k}; })();
+    const keys = await window.storage.list(`daily:${c.id}:`).catch(()=>({keys:[]}));
     const records = {};
     for (const k of (keys?.keys||[])) {
       const v = await getStorage(k);
@@ -2382,11 +2356,11 @@ function FmpiPage({ catId, color, catName }) {
     ...Object.fromEntries(FMPI_YN.map(q=>[q.id, null])),
   });
 
-  const [answers, setAnswers] = React.useState(emptyAnswers());
-  const [history, setHistory] = React.useState([]);
-  const [tab, setTab] = React.useState("form"); // form | history
+  const [answers, setAnswers] = useState(emptyAnswers());
+  const [history, setHistory] = useState([]);
+  const [tab, setTab] = useState("form"); // form | history
 
-  React.useEffect(()=>{
+  useEffect(()=>{
     (async()=>{
       const h = await getStorage(`fmpi:${catId}`);
       if (h) setHistory(h);
@@ -2577,12 +2551,12 @@ const HHHHHMM_ITEMS = [
 
 function HhhhhmmPage({ catId, color, catName }) {
   const emptyScores = () => Object.fromEntries(HHHHHMM_ITEMS.map(i=>[i.id, null]));
-  const [scores, setScores] = React.useState(emptyScores());
-  const [history, setHistory] = React.useState([]);
-  const [tab, setTab] = React.useState("form");
-  const [note, setNote] = React.useState("");
+  const [scores, setScores] = useState(emptyScores());
+  const [history, setHistory] = useState([]);
+  const [tab, setTab] = useState("form");
+  const [note, setNote] = useState("");
 
-  React.useEffect(()=>{
+  useEffect(()=>{
     (async()=>{
       const h = await getStorage(`hhhhhmm:${catId}`);
       if (h) setHistory(h);
@@ -2775,19 +2749,19 @@ function calcIdealWeight(currentWeight, bcs) {
 }
 
 function BcsPage({ catId, color, catName }) {
-  const [bcs, setBcs] = React.useState(null);
-  const [currentWeight, setCurrentWeight] = React.useState("");
-  const [history, setHistory] = React.useState([]);
-  const [tab, setTab] = React.useState("form");
-  const [note, setNote] = React.useState("");
-  const [photos, setPhotos] = React.useState([]);
+  const [bcs, setBcs] = useState(null);
+  const [currentWeight, setCurrentWeight] = useState("");
+  const [history, setHistory] = useState([]);
+  const [tab, setTab] = useState("form");
+  const [note, setNote] = useState("");
+  const [photos, setPhotos] = useState([]);
 
-  React.useEffect(()=>{
+  useEffect(()=>{
     (async()=>{
       const h = await getStorage(`bcs:${catId}`);
       if (h) setHistory(h);
       // 預填最近體重
-      const keys = await (async()=>{ const _p=`daily:${catId}:`; const _k=[]; for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k&&k.startsWith(_p))_k.push(k); } return {keys:_k}; })();
+      const keys = await window.storage.list(`daily:${catId}:`).catch(()=>({keys:[]}));
       const sorted = (keys?.keys||[]).sort().reverse();
       for (const k of sorted) {
         const v = await getStorage(k);
@@ -3039,13 +3013,13 @@ const MCS_GRADES = [
 
 function McsPage({ catId, color, catName }) {
   const emptyScores = () => Object.fromEntries(MCS_SITES.map(s=>[s.id, null]));
-  const [scores, setScores] = React.useState(emptyScores());
-  const [overall, setOverall] = React.useState(null);
-  const [history, setHistory] = React.useState([]);
-  const [tab, setTab] = React.useState("form");
-  const [note, setNote] = React.useState("");
+  const [scores, setScores] = useState(emptyScores());
+  const [overall, setOverall] = useState(null);
+  const [history, setHistory] = useState([]);
+  const [tab, setTab] = useState("form");
+  const [note, setNote] = useState("");
 
-  React.useEffect(()=>{
+  useEffect(()=>{
     (async()=>{
       const h = await getStorage(`mcs:${catId}`);
       if (h) setHistory(h);
@@ -3219,8 +3193,8 @@ function McsPage({ catId, color, catName }) {
 // ─── Calendar Picker ──────────────────────────────────────────────────────────
 function CalendarPicker({ value, onChange, recordDates, onClose, color }) {
   const today = todayStr();
-  const [viewYear, setViewYear] = React.useState(()=> parseInt(value.slice(0,4)));
-  const [viewMonth, setViewMonth] = React.useState(()=> parseInt(value.slice(5,7))-1);
+  const [viewYear, setViewYear] = useState(()=> parseInt(value.slice(0,4)));
+  const [viewMonth, setViewMonth] = useState(()=> parseInt(value.slice(5,7))-1);
 
   const recordSet = new Set(recordDates||[]);
 
@@ -3286,21 +3260,21 @@ function CalendarPicker({ value, onChange, recordDates, onClose, color }) {
 // ─── Cat Tab ──────────────────────────────────────────────────────────────────
 function CatTab({ meta }) {
   const { id:catId, color, colorLight, colorMid, grad, profileGrad } = meta;
-  const [cat, setCat] = React.useState({name:"",birthday:""});
-  const [date, setDate] = React.useState(todayStr);
-  const [daily, setDaily] = React.useState(emptyDaily());
-  const [saved, setSaved] = React.useState(false);
-  const [picker, setPicker] = React.useState(null);
-  const [showHist, setShowHist] = React.useState(false);
-  const [prevWeight, setPrevWeight] = React.useState(null);
-  const [view, setView] = React.useState("record");
-  const [dirty, setDirty] = React.useState(false);
-  const [showToast, setShowToast] = React.useState(false);
-  const [showMenu, setShowMenu] = React.useState(false);
-  const [showCal, setShowCal] = React.useState(false);
-  const [recordDates, setRecordDates] = React.useState([]);
+  const [cat, setCat] = useState({name:"",birthday:""});
+  const [date, setDate] = useState(todayStr);
+  const [daily, setDaily] = useState(emptyDaily());
+  const [saved, setSaved] = useState(false);
+  const [picker, setPicker] = useState(null);
+  const [showHist, setShowHist] = useState(false);
+  const [prevWeight, setPrevWeight] = useState(null);
+  const [view, setView] = useState("record");
+  const [dirty, setDirty] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const [showCal, setShowCal] = useState(false);
+  const [recordDates, setRecordDates] = useState([]);
 
-  React.useEffect(()=>{
+  useEffect(()=>{
     (async()=>{
       const c=await getStorage(`cat:${catId}`);
       if(c)setCat(c);
@@ -3310,12 +3284,12 @@ function CatTab({ meta }) {
     })();
   },[catId]);
 
-  React.useEffect(()=>{
+  useEffect(()=>{
     (async()=>{
       const d=await getStorage(`daily:${catId}:${date}`);
       setDaily(d||emptyDaily());
       setDirty(false);
-      const allKeys=await (async()=>{ const _p=`daily:${catId}:`; const _k=[]; for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k&&k.startsWith(_p))_k.push(k); } return {keys:_k}; })();
+      const allKeys=await window.storage.list(`daily:${catId}:`).catch(()=>({keys:[]}));
       const sorted=(allKeys?.keys||[]).filter(k=>k<`daily:${catId}:${date}`).sort().reverse();
       let pw=null;
       for(const k of sorted){const v=await getStorage(k);if(v?.weight){pw=v.weight;break;}}
@@ -4542,9 +4516,9 @@ function urgencyBg(overdue) {
 }
 
 function ReminderSystem({ catId, catNames, allVetFollowUps }) {
-  const [reminders, setReminders] = React.useState(DEFAULT_REMINDERS);
+  const [reminders, setReminders] = useState(DEFAULT_REMINDERS);
 
-  React.useEffect(()=>{
+  useEffect(()=>{
     (async()=>{
       const saved = await getStorage("reminders:global");
       if (saved) {
@@ -4563,8 +4537,8 @@ function ReminderSystem({ catId, catNames, allVetFollowUps }) {
     await setStorage("reminders:global", next);
   };
 
-  const [editingKey, setEditingKey] = React.useState(null);
-  const [editDate, setEditDate] = React.useState("");
+  const [editingKey, setEditingKey] = useState(null);
+  const [editDate, setEditDate] = useState("");
 
   const markDone = async (key, date) => {
     const next = {...reminders, [key]:{...reminders[key], lastDone: date || todayStr()}};
@@ -4600,7 +4574,7 @@ function ReminderSystem({ catId, catNames, allVetFollowUps }) {
     return [{ key:`vet_${cid}_${followUp}`, icon:"🏥", label:`回診 ${clinic||""}`, sub:reason||"", date:followUp, until, catId:cid, color:"#1d4ed8", bg:"#eff6ff" }];
   });
 
-  const [collapsed, setCollapsed] = React.useState(false);
+  const [collapsed, setCollapsed] = useState(false);
 
   const allItems = [...activeReminders, ...vetReminders];
   const urgentCount = allItems.filter(r =>
@@ -4720,12 +4694,12 @@ function ReminderSystem({ catId, catNames, allVetFollowUps }) {
 }
 
 // ─── App ──────────────────────────────────────────────────────────────────────
-function App() {
-  const [tab, setTab] = React.useState("sakura");
-  const [catInfo, setCatInfo] = React.useState({sakura:{name:"",bday:""},xi:{name:"",bday:""}});
-  const [vetFollowUps, setVetFollowUps] = React.useState([]);
+export default function App() {
+  const [tab, setTab] = useState("sakura");
+  const [catInfo, setCatInfo] = useState({sakura:{name:"",bday:""},xi:{name:"",bday:""}});
+  const [vetFollowUps, setVetFollowUps] = useState([]);
 
-  React.useEffect(()=>{
+  useEffect(()=>{
     (async()=>{
       for(const c of CATS){
         const d=await getStorage(`cat:${c.id}`);
@@ -4734,7 +4708,7 @@ function App() {
       // collect all vet follow-ups
       const allFollowUps = [];
       for (const c of CATS) {
-        const keys = await (async()=>{ const _p=`daily:${c.id}:`; const _k=[]; for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k&&k.startsWith(_p))_k.push(k); } return {keys:_k}; })();
+        const keys = await window.storage.list(`daily:${c.id}:`).catch(()=>({keys:[]}));
         for (const k of (keys?.keys||[])) {
           const rec = await getStorage(k);
           if (rec?.vetVisits?.length) {
@@ -4785,20 +4759,3 @@ function App() {
     </>
   );
 }
-
-const rootEl = document.getElementById('root');
-if (typeof ReactDOM.createRoot === 'function') {
-  ReactDOM.createRoot(rootEl).render(React.createElement(App));
-} else {
-  ReactDOM.render(React.createElement(App), rootEl);
-}
-  </script>
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js').catch(()=>{});
-      });
-    }
-  </script>
-</body>
-</html>
