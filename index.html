@@ -86,6 +86,7 @@ const FOOD_DB = {
     { id:"D10", brand:"Orijen 歐睿健", name:"鮮雞愛貓 全齡無穀鮮肉", meat:"新鮮雞肉20%", origin:"加拿大" },
     { id:"D11", brand:"Royal Canin 皇家", name:"O30 潔牙保健成貓專用乾糧", meat:"脫水禽肉蛋白、米、玉米、動物脂肪、小麥麩質、蔬菜纖維、水解家禽蛋白、小麥、小麥麵粉、玉米粉、玉米麩質、礦物質、甜菜漿、魚油、大豆油、果寡糖、洋車前子殼及籽", origin:"—" },
     { id:"D12", brand:"Hill's 希爾思", name:"成貓 雞肉特調食譜（1–6歲）", meat:"雞肉、全穀粒小麥、玉米蛋白粉、全穀粒玉米、雞脂肪、雞肉粉、釀造米、脫水甜菜漿、黃豆粉、雞肝香料、黃豆油、乳酸、魚油", origin:"美國" },
+    { id:"D13", brand:"Natural Balance 自然平衡 NB", name:"單一肉源 無穀鹿肉關節保健", meat:"豌豆、鹿肉、豌豆蛋白、鹿肉粉、啤酒乾燥酵母、芥花油、天然香料、亞麻籽、鯡魚油、碳酸鈣、鹽、DL-蛋氨酸、氯化鉀、氯化膽鹼、牛磺酸", origin:"—" },
   ],
   supplement: [
     { id:"S01", brand:"骨力勁", name:"Silver Advanced 骨關節保健＋肌力保健", dosage:"1錠/天", note:"膠原蛋白、葡萄糖胺、鯊魚軟骨素" },
@@ -575,6 +576,23 @@ const css = `
 }
 
 /* ── Date nav ── */
+/* ── Quick fill ── */
+.quick-fill-row {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  padding: 8px 0 4px;
+}
+.quick-fill-btn {
+  padding: 5px 11px; border-radius: 50px;
+  border: 1.5px solid rgba(41,128,212,0.2);
+  background: white; cursor: pointer;
+  font-size: 11px; font-weight: 700;
+  color: var(--text2); font-family: var(--font);
+  max-width: 160px; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap;
+  transition: all .13s;
+}
+.quick-fill-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(41,128,212,0.06); }
+
 /* ── Calendar picker ── */
 .cal-overlay {
   position: fixed; inset: 0;
@@ -3299,6 +3317,9 @@ function CatTab({ meta }) {
   const [showMenu, setShowMenu] = React.useState(false);
   const [showCal, setShowCal] = React.useState(false);
   const [recordDates, setRecordDates] = React.useState([]);
+  const [freqWets, setFreqWets] = React.useState([]);
+  const [freqDrys, setFreqDrys] = React.useState([]);
+  const [freqMeds, setFreqMeds] = React.useState([]);
 
   React.useEffect(()=>{
     (async()=>{
@@ -3307,6 +3328,54 @@ function CatTab({ meta }) {
       // 載入所有有紀錄的日期
       const all = await loadAllRecords(catId);
       setRecordDates(all.map(r=>r.date));
+
+      // 計算常用濕食（前5名）
+      const wetCount = {};
+      const wetMap = {};
+      all.slice(-60).forEach(r=>{
+        (r.wets||[]).forEach(w=>{
+          const f = w.food?.trim();
+          if (!f) return;
+          wetCount[f] = (wetCount[f]||0) + 1;
+          if (!wetMap[f]) wetMap[f] = w; // 保留第一次的完整資料
+        });
+      });
+      const topWets = Object.entries(wetCount)
+        .sort((a,b)=>b[1]-a[1]).slice(0,5)
+        .map(([food])=>({...wetMap[food], food}));
+      setFreqWets(topWets);
+
+      // 計算常用飼料（前3名）
+      const dryCount = {};
+      const dryMap = {};
+      all.slice(-60).forEach(r=>{
+        (r.drys||[]).forEach(d=>{
+          const f = d.food?.trim();
+          if (!f) return;
+          dryCount[f] = (dryCount[f]||0) + 1;
+          if (!dryMap[f]) dryMap[f] = d;
+        });
+      });
+      const topDrys = Object.entries(dryCount)
+        .sort((a,b)=>b[1]-a[1]).slice(0,3)
+        .map(([food])=>({...dryMap[food], food}));
+      setFreqDrys(topDrys);
+
+      // 計算常用藥物（前5名）
+      const medCount = {};
+      const medMap = {};
+      all.slice(-60).forEach(r=>{
+        (r.meds||[]).forEach(m=>{
+          const n = m.name?.trim();
+          if (!n) return;
+          medCount[n] = (medCount[n]||0) + 1;
+          if (!medMap[n]) medMap[n] = m;
+        });
+      });
+      const topMeds = Object.entries(medCount)
+        .sort((a,b)=>b[1]-a[1]).slice(0,5)
+        .map(([name])=>({...medMap[name], name}));
+      setFreqMeds(topMeds);
     })();
   },[catId]);
 
@@ -3745,6 +3814,20 @@ function CatTab({ meta }) {
               </div>
             </div>
             <div className="card-body">
+              {freqWets.length>0 && (
+                <div style={{marginBottom:8}}>
+                  <div style={{fontSize:10,fontWeight:800,color:"var(--text3)",letterSpacing:".4px",textTransform:"uppercase",marginBottom:5}}>⚡ 常用</div>
+                  <div className="quick-fill-row">
+                    {freqWets.map((w,i)=>(
+                      <button key={i} className="quick-fill-btn"
+                        title={w.food}
+                        onClick={()=>add("wets",{...emptyWet(), food:w.food, ingredients:w.ingredients||"", weight:w.weight||"", origin:w.origin||"", texture:w.texture||""})}>
+                        {w.food.length>18 ? w.food.slice(0,18)+"…" : w.food}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
               {!(daily.wets||[]).length && <div className="empty-hint">尚未記錄</div>}
               {(daily.wets||[]).map((w,i)=>(
                 <div key={i} className="sub-item">
@@ -3840,6 +3923,20 @@ function CatTab({ meta }) {
               </div>
             </div>
             <div className="card-body">
+              {freqDrys.length>0 && (
+                <div style={{marginBottom:8}}>
+                  <div style={{fontSize:10,fontWeight:800,color:"var(--text3)",letterSpacing:".4px",textTransform:"uppercase",marginBottom:5}}>⚡ 常用</div>
+                  <div className="quick-fill-row">
+                    {freqDrys.map((d,i)=>(
+                      <button key={i} className="quick-fill-btn"
+                        title={d.food}
+                        onClick={()=>add("drys",{...emptyDry(), food:d.food, ingredients:d.ingredients||"", origin:d.origin||""})}>
+                        {d.food.length>18 ? d.food.slice(0,18)+"…" : d.food}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
               {!(daily.drys||[]).length && <div className="empty-hint">尚未記錄</div>}
               {(daily.drys||[]).map((d,i)=>(
                 <div key={i} className="sub-item">
@@ -4355,6 +4452,22 @@ function CatTab({ meta }) {
               <button className="add-btn" style={{borderColor:"#10b981",color:"#10b981"}} onClick={()=>add("meds",emptyMed())}>＋ 新增</button>
             </div>
             <div className="card-body">
+              {freqMeds.length>0 && (
+                <div style={{marginBottom:8}}>
+                  <div style={{fontSize:10,fontWeight:800,color:"var(--text3)",letterSpacing:".4px",textTransform:"uppercase",marginBottom:5}}>⚡ 常用</div>
+                  <div className="quick-fill-row">
+                    {freqMeds.map((m,i)=>(
+                      <button key={i} className="quick-fill-btn"
+                        style={{borderColor:"#a7f3d0",color:"#065f46"}}
+                        title={`${m.name} ${m.dose||""}${m.unit||""}`}
+                        onClick={()=>add("meds",{...emptyMed(), name:m.name, dose:m.dose||"", unit:m.unit||"", route:m.route||""})}>
+                        {m.name.length>14 ? m.name.slice(0,14)+"…" : m.name}
+                        {m.dose ? ` ${m.dose}${m.unit||""}` : ""}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
               {!(daily.meds||[]).length && <div className="empty-hint">今日無用藥紀錄</div>}
               {(daily.meds||[]).map((m,i)=>(
                 <div key={i} className="med-item">
