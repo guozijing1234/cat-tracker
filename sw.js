@@ -1,4 +1,4 @@
-const CACHE = 'cat-tracker-v12';
+const CACHE = 'cat-tracker-v13';
 const ASSETS = ['./index.html'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));

@@ -72,6 +72,13 @@ const FOOD_DB = {
     { id:"W41", brand:"SEEDS Miki", name:"雞肝湯凍 白身鮪魚＋鴨肉", meat:"雞肝湯、白身鮪魚、鴨肉、膠凍、葡萄糖胺", weight:undefined, origin:"台灣" },
     { id:"W42", brand:"SEEDS Miki", name:"南瓜湯凍 鮮嫩軟雞絲＋白身鮪魚", meat:"南瓜湯、雞肉、白身鮪魚、膠凍、牛磺酸", weight:undefined, origin:"台灣" },
     { id:"W43", brand:"GimCat ShinyCat Broth", name:"竣寶鮮鮪魚佐白鮭魚魚湯罐", meat:"鮪魚60%、魚湯32.9%、白鮭魚4%、米", weight:70, origin:"—" },
+    { id:"W44", brand:"GimCat ShinyCat Jelly", name:"鮮嫩雞胸肉佐鮮蝦（粉色）", meat:"雞胸肉50%、雞湯、鮮蝦4%、米、氯化鉀", weight:70, origin:"—" },
+    { id:"W45", brand:"SEEDS Dr.Wish", name:"愛貓營養食 鮪魚＋維他命A（泥狀）", meat:"水、鮪魚、大豆蛋白、維他命E、維他命A", weight:85, origin:"泰國" },
+    { id:"W46", brand:"SEEDS MiCo 咪湯", name:"機能湯罐 鮪魚＋雞肉", meat:"水、鮪魚、雞肉、木薯修飾澱粉、瓜爾膠", weight:85, origin:"泰國" },
+    { id:"W47", brand:"GimCat ShinyCat Jelly", name:"鮮嫩雞胸肉佐蟹肉（紅色）", meat:"雞胸肉50%、雞湯、蟹肉4%、米、氯化鉀", weight:70, origin:"—" },
+    { id:"W48", brand:"肉球世界 Paw Paw Land", name:"南極磷蝦大肉包 雞肉×蔓越莓 泥狀", meat:"水、雞肉、雞肝、雞心、南極磷蝦油、蛋黃粉、南極磷蝦粉、蒟蒻粉、碳酸鈣、蔓越莓、酵母粉、牛磺酸", weight:45, origin:"台灣" },
+    { id:"W49", brand:"Royal Canin 皇家", name:"UC33W 泌尿道保健貓主食濕糧", meat:"肉及相關產品、穀物、礦物質、蔬菜纖維、酵母", weight:85, origin:"奧地利" },
+    { id:"W50", brand:"Chérie 法麗", name:"乳酸菌主食貓餐包 雞肉肉泥 毛髮生長", meat:"雞肉28%、木薯澱粉、葵花油、五水硫酸鈣、雞肉粉、膳草豆腐、水解雞蛋白、鮪魚油、亞麻籽油、牛磺酸、植物乳桿菌、七水硫酸鋅、維生素群", weight:40, origin:"泰國" },
   ],
   dry: [
     { id:"D01", brand:"Petcurean go!", name:"Carnivore 無穀淡水鱒魚+鮭魚", meat:"去骨鱒魚、鮭魚粉", origin:"加拿大" },
@@ -143,6 +150,7 @@ const emptyDaily = () => ({
   issues:[], issueCounts:{}, issueNote:"", issueLinks:[],
   breathRate:"", toiletCryTiming:[],
   vomitDetail:{ content:[], color:[], form:"" },
+  poopLog:{ count:"", type:"", color:[], extras:[], note:"" },
   vetVisits:[], note:"",
 });
 const emptyMed = () => ({ name:"", dose:"", unit:"", route:"", time:"", given:false, note:"" });
@@ -185,6 +193,18 @@ const ISSUES = [
   { g:"行為", icon:"😾", items:[{v:"😾 過度舔毛"},{v:"🙈 躲避"},{v:"😤 異常攻擊性"},{v:"😿 持續嚎叫",countable:true},{v:"🌀 異常轉圈"}] },
   { g:"身體", icon:"🩺", items:[{v:"😮‍💨 呼吸急促",breathable:true},{v:"👁️ 眼睛分泌物"},{v:"👃 鼻水打噴嚏"},{v:"🦷 流口水過多"}] },
 ];
+const POOP_TYPES = [
+  { v:"1", label:"顆粒狀",       sub:"便秘",      color:"#7c3aed" },
+  { v:"2", label:"條狀有塊",     sub:"偏硬",      color:"#b45309" },
+  { v:"3", label:"條狀有裂縫",   sub:"正常",      color:"#16a34a" },
+  { v:"4", label:"光滑條狀",     sub:"理想",      color:"#22c55e" },
+  { v:"5", label:"軟塊",         sub:"偏軟",      color:"#f59e0b" },
+  { v:"6", label:"糊狀",         sub:"腹瀉傾向",  color:"#f97316" },
+  { v:"7", label:"水狀",         sub:"腹瀉",      color:"#ef4444" },
+];
+const POOP_COLORS = ["棕色","深棕色","黃色","黑色","紅色","灰色","白色"];
+const POOP_EXTRAS = ["有血","有黏液","含未消化食物","含異物","異味明顯","量很少","量很多"];
+
 const ALL_ISSUES = ISSUES.flatMap(g => g.items.map(i => i.v));
 
 const TRAINING_ITEMS = [
@@ -576,6 +596,22 @@ const css = `
 }
 
 /* ── Date nav ── */
+/* ── Poop log ── */
+.poop-type-grid {
+  display: grid; grid-template-columns: repeat(4,1fr); gap: 6px; margin-bottom: 4px;
+}
+.poop-type-btn {
+  padding: 8px 4px; border-radius: 12px;
+  border: 2px solid rgba(41,128,212,0.12);
+  background: white; cursor: pointer;
+  font-family: var(--font); transition: all .15s;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+}
+.poop-type-btn.active { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+.poop-type-n { font-size: 15px; font-weight: 900; display:block; }
+.poop-type-l { font-size: 9px; font-weight: 700; color: var(--text2); display:block; line-height:1.2; }
+.poop-type-s { font-size: 8px; font-weight: 500; color: var(--text3); display:block; }
+
 /* ── Quick fill ── */
 .quick-fill-row {
   display: flex; gap: 6px; flex-wrap: wrap;
@@ -2247,6 +2283,7 @@ function HistoryPage({ cat, catId, color, onClose }) {
               <div className="hexpand">
                 {r.weight&&<div className="hexp-row"><span className="hexp-k">體重</span><span>{r.weight} kg</span></div>}
                 {r.restingRR&&<div className="hexp-row"><span className="hexp-k">休息呼吸</span><span style={{color:parseInt(r.restingRR)>30?"#dc2626":"inherit"}}>{r.restingRR} 次/分</span></div>}
+                {(r.poopLog?.count||r.poopLog?.type)&&<div className="hexp-row"><span className="hexp-k">💩 便便</span><span>{r.poopLog.count?`${r.poopLog.count}次 `:""}{r.poopLog.type?`Type ${r.poopLog.type} ${POOP_TYPES.find(t=>t.v===r.poopLog.type)?.label||""}`:""}{r.poopLog.color?.length?` · ${r.poopLog.color.join("、")}`:""}{r.poopLog.extras?.length?` · ${r.poopLog.extras.join("、")}`:""}</span></div>}
                 {(r.activity||r.reactivity||r.emotion)&&<div className="hexp-row"><span className="hexp-k">行為評估</span><span>{[r.activity&&`活動 ${r.activity}`,r.reactivity&&`反應 ${r.reactivity}`,r.emotion&&`情緒 ${r.emotion}`].filter(Boolean).join(" · ")}</span></div>}
                 {r.wets?.length>0&&<div className="hexp-row"><span className="hexp-k">濕食</span><span>{r.wets.map(w=>`${w.food}${w.weight?` ${w.weight}g`:""}${w.texture?` · ${w.texture}`:""}${w.eaten?` · ${w.eaten}`:""}`).join("；")}</span></div>}
                 {r.drys?.length>0&&<div className="hexp-row"><span className="hexp-k">飼料</span><span>{r.drys.map(d=>d.food).join("、")}</span></div>}
@@ -4062,6 +4099,92 @@ function CatTab({ meta }) {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+
+          {/* Poop log */}
+          <div className="card">
+            <div className="card-head">
+              <div className="card-title"><div className="card-icon" style={iconBg("#92400e")}>💩</div>便便紀錄</div>
+            </div>
+            <div className="card-body">
+              {/* 頻率 */}
+              <div className="field-group">
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
+                  <span className="field-label" style={{marginBottom:0}}>今日次數</span>
+                </div>
+                <div style={{display:"flex",gap:6,alignItems:"center"}}>
+                  {[1,2,3,4,5].map(n=>(
+                    <button key={n}
+                      onClick={()=>up("poopLog.count", daily.poopLog?.count===String(n)?"":String(n))}
+                      style={{
+                        width:40,height:40,borderRadius:50,border:`2px solid ${daily.poopLog?.count===String(n)?"#92400e":"rgba(41,128,212,0.15)"}`,
+                        background:daily.poopLog?.count===String(n)?"#fef3c7":"white",
+                        color:daily.poopLog?.count===String(n)?"#92400e":"var(--text2)",
+                        fontFamily:"var(--font)",fontSize:15,fontWeight:900,cursor:"pointer",
+                      }}>{n}</button>
+                  ))}
+                  <input type="number" className="inp" value={["1","2","3","4","5"].includes(daily.poopLog?.count)?"":daily.poopLog?.count||""}
+                    onChange={e=>up("poopLog.count",e.target.value)}
+                    placeholder="其他" style={{width:64}}/>
+                  <span style={{fontSize:12,color:"var(--text3)",fontWeight:600}}>次</span>
+                </div>
+              </div>
+              <div className="divider"/>
+              {/* 形狀 */}
+              <div className="field-group">
+                <span className="field-label">形狀（布里斯托分類）</span>
+                <div className="poop-type-grid">
+                  {POOP_TYPES.map(t=>{
+                    const active = daily.poopLog?.type===t.v;
+                    return (
+                      <button key={t.v} className={`poop-type-btn${active?" active":""}`}
+                        style={active?{background:`${t.color}15`,borderColor:t.color}:{}}
+                        onClick={()=>up("poopLog.type", daily.poopLog?.type===t.v?"":t.v)}>
+                        <span className="poop-type-n" style={active?{color:t.color}:{}}>{t.v}</span>
+                        <span className="poop-type-l" style={active?{color:t.color}:{}}>{t.label}</span>
+                        <span className="poop-type-s">{t.sub}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                {daily.poopLog?.type && (
+                  <div style={{padding:"6px 10px",borderRadius:8,background:`${POOP_TYPES.find(t=>t.v===daily.poopLog.type)?.color||"#92400e"}15`,fontSize:11,fontWeight:600,color:POOP_TYPES.find(t=>t.v===daily.poopLog.type)?.color}}>
+                    Type {daily.poopLog.type}：{POOP_TYPES.find(t=>t.v===daily.poopLog.type)?.label}（{POOP_TYPES.find(t=>t.v===daily.poopLog.type)?.sub}）
+                  </div>
+                )}
+              </div>
+              <div className="divider"/>
+              {/* 顏色 */}
+              <div className="field-group">
+                <span className="field-label">顏色（可複選）</span>
+                <div className="chips">
+                  {POOP_COLORS.map(c=>{
+                    const active=(daily.poopLog?.color||[]).includes(c);
+                    return <button key={c} className={`chip${active?" ac":""}`}
+                      style={active?{borderColor:"#92400e",background:"#fef3c7",color:"#92400e"}:{}}
+                      onClick={()=>{ setDirty(true); setDaily(p=>({...p,poopLog:{...p.poopLog,color:active?(p.poopLog?.color||[]).filter(x=>x!==c):[...(p.poopLog?.color||[]),c]}})); }}>{c}</button>;
+                  })}
+                </div>
+              </div>
+              <div className="divider"/>
+              {/* 其他觀察 */}
+              <div className="field-group">
+                <span className="field-label">其他觀察（可複選）</span>
+                <div className="chips">
+                  {POOP_EXTRAS.map(e=>{
+                    const active=(daily.poopLog?.extras||[]).includes(e);
+                    return <button key={e} className={`chip${active?" ac":""}`}
+                      style={active?{borderColor:"#ef4444",background:"#fef2f2",color:"#dc2626"}:{}}
+                      onClick={()=>{ setDirty(true); setDaily(p=>({...p,poopLog:{...p.poopLog,extras:active?(p.poopLog?.extras||[]).filter(x=>x!==e):[...(p.poopLog?.extras||[]),e]}})); }}>{e}</button>;
+                  })}
+                </div>
+              </div>
+              {/* 備註 */}
+              <div>
+                <span className="field-label">備註</span>
+                <textarea className="inp" value={daily.poopLog?.note||""} onChange={e=>up("poopLog.note",e.target.value)} rows={2} placeholder="其他觀察…"/>
+              </div>
             </div>
           </div>
 
