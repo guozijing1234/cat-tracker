@@ -1984,7 +1984,15 @@ function AnalyticsPage({ catId, color }) {
   const avgW=wsAll.length?(wsAll.reduce((a,b)=>a+b,0)/wsAll.length).toFixed(2):"—";
   const issdays=filtered.filter(r=>r.issues?.length>0).length;
 
-  const subTabs=[{id:"overview",l:"📊 總覽"},{id:"weight",l:"⚖️ 體重"},{id:"food",l:"🐟 飲食"},{id:"health",l:"⚠️ 健康"}];
+  const subTabs=[
+    {id:"overview",l:"📊 總覽"},
+    {id:"weight",  l:"⚖️ 體重"},
+    {id:"food",    l:"🐟 飲食"},
+    {id:"health",  l:"⚠️ 健康"},
+    {id:"meds",    l:"💊 給藥"},
+    {id:"supp",    l:"🌿 保健品"},
+    {id:"poop",    l:"💩 便便"},
+  ];
   const ranges=[{v:7,l:"7天"},{v:14,l:"14天"},{v:30,l:"30天"},{v:0,l:"全部"}];
 
   // Format month display
@@ -2145,6 +2153,166 @@ function AnalyticsPage({ catId, color }) {
           </div>
         </div>
       </>}
+
+      {!loading && subTab==="meds" && <>
+        <div className="an-card"><div className="an-card-title">💊 用藥統計與給藥率</div><MedAnalysis records={filtered}/></div>
+        <div className="an-card">
+          <div className="an-card-title">📅 用藥天數</div>
+          <div className="stat-row">
+            {(()=>{
+              const medDays = filtered.filter(r=>(r.meds||[]).length>0).length;
+              const givenDays = filtered.filter(r=>(r.meds||[]).some(m=>m.given)).length;
+              return <>
+                <div className="stat-box"><span className="stat-n" style={{color}}>{medDays}</span><span className="stat-l">有用藥天數</span></div>
+                <div className="stat-box"><span className="stat-n" style={{color:"#10b981"}}>{givenDays}</span><span className="stat-l">有給藥天數</span></div>
+                <div className="stat-box"><span className="stat-n" style={{color:"var(--text3)"}}>{totalDays-medDays}</span><span className="stat-l">無用藥天數</span></div>
+              </>;
+            })()}
+          </div>
+        </div>
+      </>}
+
+      {!loading && subTab==="supp" && <>
+        <div className="an-card"><div className="an-card-title">🌿 保健品服用頻率</div><SuppAnalysis records={filtered}/></div>
+        <div className="an-card">
+          <div className="an-card-title">📅 保健品統計</div>
+          <div className="stat-row">
+            {(()=>{
+              const suppDays = filtered.filter(r=>(r.supplements||[]).length>0).length;
+              return <>
+                <div className="stat-box"><span className="stat-n" style={{color}}>{suppDays}</span><span className="stat-l">有服用天數</span></div>
+                <div className="stat-box"><span className="stat-n" style={{color:"var(--text3)"}}>{totalDays-suppDays}</span><span className="stat-l">未服用天數</span></div>
+                <div className="stat-box"><span className="stat-n" style={{color:"#7c3aed"}}>{totalDays?Math.round(suppDays/totalDays*100):0}%</span><span className="stat-l">服用率</span></div>
+              </>;
+            })()}
+          </div>
+        </div>
+      </>}
+
+      {!loading && subTab==="poop" && <>
+        <div className="an-card"><div className="an-card-title">💩 便便健康分析</div><PoopAnalysis records={filtered}/></div>
+      </>}
+    </div>
+  );
+}
+
+// ─── Medication Analysis ──────────────────────────────────────────────────────
+function MedAnalysis({ records }) {
+  const medCount = {};
+  const medGiven = {};
+  records.forEach(r=>{
+    (r.meds||[]).forEach(m=>{
+      const n = m.name?.trim(); if(!n) return;
+      medCount[n] = (medCount[n]||0)+1;
+      if(m.given) medGiven[n] = (medGiven[n]||0)+1;
+    });
+  });
+  const entries = Object.entries(medCount).sort((a,b)=>b[1]-a[1]);
+  if(!entries.length) return <div className="no-data">尚無用藥紀錄 💊</div>;
+  return (
+    <div>
+      {entries.map(([name,total])=>{
+        const given = medGiven[name]||0;
+        const rate = Math.round(given/total*100);
+        return (
+          <div key={name} style={{marginBottom:12,paddingBottom:12,borderBottom:"1px solid var(--border)"}}>
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
+              <span style={{fontSize:13,fontWeight:700,color:"var(--text)"}}>{name}</span>
+              <span style={{fontSize:12,fontWeight:800,color:"#065f46"}}>{given}/{total} 次給藥</span>
+            </div>
+            <div style={{height:8,borderRadius:50,background:"#d1fae5",overflow:"hidden"}}>
+              <div style={{height:"100%",width:`${rate}%`,background:"#10b981",borderRadius:50}}/>
+            </div>
+            <div style={{fontSize:10,color:"var(--text3)",marginTop:3,fontWeight:600}}>給藥率 {rate}%</div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── Supplement Analysis ──────────────────────────────────────────────────────
+function SuppAnalysis({ records }) {
+  const suppCount = {};
+  records.forEach(r=>{
+    (r.supplements||[]).forEach(s=>{
+      const n = s.name?.trim(); if(!n) return;
+      suppCount[n] = (suppCount[n]||0)+1;
+    });
+  });
+  const entries = Object.entries(suppCount).sort((a,b)=>b[1]-a[1]);
+  const total = records.length;
+  if(!entries.length) return <div className="no-data">尚無保健品紀錄 🌿</div>;
+  return (
+    <div>
+      {entries.map(([name,count])=>{
+        const rate = total ? Math.round(count/total*100) : 0;
+        return (
+          <div key={name} style={{marginBottom:12,paddingBottom:12,borderBottom:"1px solid var(--border)"}}>
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
+              <span style={{fontSize:13,fontWeight:700,color:"var(--text)"}}>{name}</span>
+              <span style={{fontSize:12,fontWeight:800,color:"#7c3aed"}}>{count} 天</span>
+            </div>
+            <div style={{height:8,borderRadius:50,background:"#ede9fe",overflow:"hidden"}}>
+              <div style={{height:"100%",width:`${rate}%`,background:"#7c3aed",borderRadius:50}}/>
+            </div>
+            <div style={{fontSize:10,color:"var(--text3)",marginTop:3,fontWeight:600}}>記錄天中佔 {rate}%</div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── Poop Analysis ────────────────────────────────────────────────────────────
+function PoopAnalysis({ records }) {
+  const withPoop = records.filter(r=>r.poopLog?.type||r.poopLog?.count);
+  if(!withPoop.length) return <div className="no-data">尚無便便紀錄 💩</div>;
+
+  // 形狀分布
+  const typeCounts = {};
+  POOP_TYPES.forEach(t=>typeCounts[t.v]=0);
+  withPoop.forEach(r=>{ if(r.poopLog?.type) typeCounts[r.poopLog.type]=(typeCounts[r.poopLog.type]||0)+1; });
+  const totalType = Object.values(typeCounts).reduce((a,b)=>a+b,0);
+
+  // 常見問題
+  const extraCounts = {};
+  withPoop.forEach(r=>{ (r.poopLog?.extras||[]).forEach(e=>{ extraCounts[e]=(extraCounts[e]||0)+1; }); });
+
+  // 異常天數（Type 1,2,6,7）
+  const abnormal = withPoop.filter(r=>["1","2","6","7"].includes(r.poopLog?.type)).length;
+  const normal = withPoop.filter(r=>["3","4"].includes(r.poopLog?.type)).length;
+
+  return (
+    <div>
+      <div className="stat-row" style={{marginBottom:14}}>
+        <div className="stat-box"><span className="stat-n" style={{color:"#22c55e"}}>{normal}</span><span className="stat-l">正常天</span></div>
+        <div className="stat-box"><span className="stat-n" style={{color:"#ef4444"}}>{abnormal}</span><span className="stat-l">異常天</span></div>
+        <div className="stat-box"><span className="stat-n" style={{color:"#92400e"}}>{withPoop.length}</span><span className="stat-l">有記錄天</span></div>
+      </div>
+
+      <div style={{fontSize:12,fontWeight:800,color:"var(--text2)",marginBottom:8}}>形狀分布（布里斯托分類）</div>
+      {POOP_TYPES.filter(t=>typeCounts[t.v]>0).map(t=>(
+        <div key={t.v} style={{marginBottom:8}}>
+          <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}>
+            <span style={{fontSize:12,fontWeight:700,color:t.color}}>Type {t.v} {t.label}</span>
+            <span style={{fontSize:12,fontWeight:800,color:t.color}}>{typeCounts[t.v]} 次（{Math.round(typeCounts[t.v]/totalType*100)}%）</span>
+          </div>
+          <div style={{height:8,borderRadius:50,background:`${t.color}20`,overflow:"hidden"}}>
+            <div style={{height:"100%",width:`${Math.round(typeCounts[t.v]/totalType*100)}%`,background:t.color,borderRadius:50}}/>
+          </div>
+        </div>
+      ))}
+
+      {Object.keys(extraCounts).length>0 && <>
+        <div style={{fontSize:12,fontWeight:800,color:"var(--text2)",margin:"14px 0 8px"}}>常見異常觀察</div>
+        {Object.entries(extraCounts).sort((a,b)=>b[1]-a[1]).map(([e,c])=>(
+          <div key={e} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:"1px solid var(--border)"}}>
+            <span style={{fontSize:12,fontWeight:600,color:"var(--text2)"}}>{e}</span>
+            <span style={{fontSize:12,fontWeight:800,color:"#ef4444"}}>{c} 次</span>
+          </div>
+        ))}
+      </>}
     </div>
   );
 }
@@ -2303,7 +2471,24 @@ function HistoryPage({ cat, catId, color, onClose }) {
                   <span key={i} style={{marginRight:8}}>{lk.label} <a href={lk.url} target="_blank" rel="noreferrer" style={{color:"var(--accent)"}}>{lk.url.slice(0,28)}{lk.url.length>28?"…":""}</a></span>
                 ))}</span></div>}
                 {r.note&&<div className="hexp-row"><span className="hexp-k">備註</span><span>{r.note}</span></div>}
-                {r.meds?.length>0&&<div className="hexp-row"><span className="hexp-k" style={{color:"#065f46"}}>用藥</span><span style={{color:"#065f46"}}>{r.meds.map(m=>`${m.name}${m.dose?` ${m.dose}${m.unit}`:""}${m.given?" ✓":" —"}`).join("、")}</span></div>}
+                {r.meds?.length>0&&(
+                  <div className="hexp-row" style={{flexDirection:"column",alignItems:"flex-start",gap:4}}>
+                    <span className="hexp-k" style={{color:"#065f46"}}>用藥紀錄</span>
+                    {r.meds.map((m,i)=>(
+                      <div key={i} style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:8,background:m.given?"#d1fae5":"#f1f5f9",width:"100%"}}>
+                        <span style={{fontSize:14}}>{m.given?"✅":"⬜"}</span>
+                        <div style={{flex:1,minWidth:0}}>
+                          <span style={{fontSize:12,fontWeight:800,color:m.given?"#065f46":"var(--text2)"}}>{m.name}</span>
+                          <span style={{fontSize:11,color:"var(--text3)",marginLeft:6}}>
+                            {m.dose&&m.unit?`${m.dose} ${m.unit}`:""}
+                            {m.route?` · ${m.route}`:""}
+                          </span>
+                        </div>
+                        {m.time&&<span style={{fontSize:11,fontWeight:700,color:"var(--text3)",flexShrink:0}}>{m.time}</span>}
+                      </div>
+                    ))}
+                  </div>
+                )}
                 {r.vetVisits?.length>0&&<div className="hexp-row"><span className="hexp-k" style={{color:"#1d4ed8"}}>就醫</span><span style={{color:"#1d4ed8"}}>{r.vetVisits.map(v=>[v.clinic,v.reason,v.diagnosis].filter(Boolean).join(" · ")).join("；")}</span></div>}
                 <button className="hdel-btn" onClick={()=>del(r.date)}>刪除此筆</button>
               </div>
