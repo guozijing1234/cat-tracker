@@ -1520,22 +1520,20 @@ textarea.vet-inp { resize: vertical; min-height: 56px; line-height: 1.5; }
   background: rgba(10,30,70,0.5);
   backdrop-filter: blur(6px);
   z-index: 200;
-  display: flex; align-items: flex-end; justify-content: center;
+  display: flex; align-items: flex-start; justify-content: center;
 }
 .picker-sheet {
   background: #f0f7ff;
-  border-radius: 28px 28px 0 0;
+  border-radius: 0 0 28px 28px;
   width: 100%; max-width: 480px;
-  max-height: 74vh;
+  max-height: 82vh;
+  margin-top: env(safe-area-inset-top, 0px);
   display: flex; flex-direction:column;
-  box-shadow: 0 -8px 40px rgba(30,100,180,0.25);
+  box-shadow: 0 8px 40px rgba(30,100,180,0.25);
   overflow: hidden;
 }
 .picker-handle {
-  width: 40px; height: 4px; border-radius: 2px;
-  background: rgba(41,128,212,0.25);
-  margin: 14px auto 0;
-  flex-shrink: 0;
+  display: none;
 }
 .picker-head {
   display: flex; justify-content:space-between; align-items:center;
