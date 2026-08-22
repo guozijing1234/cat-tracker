@@ -78,6 +78,7 @@ const FOOD_DB = {
     { id:"W47", brand:"GimCat ShinyCat Jelly", name:"鮮嫩雞胸肉佐蟹肉（紅色）", meat:"雞胸肉50%、雞湯、蟹肉4%、米、氯化鉀", weight:70, origin:"—" },
     { id:"W48", brand:"肉球世界 Paw Paw Land", name:"南極磷蝦大肉包 雞肉×蔓越莓 泥狀", meat:"水、雞肉、雞肝、雞心、南極磷蝦油、蛋黃粉、南極磷蝦粉、蒟蒻粉、碳酸鈣、蔓越莓、酵母粉、牛磺酸", weight:45, origin:"台灣" },
     { id:"W49", brand:"Royal Canin 皇家", name:"UC33W 泌尿道保健貓主食濕糧", meat:"肉及相關產品、穀物、礦物質、蔬菜纖維、酵母", weight:85, origin:"奧地利" },
+    { id:"W51", brand:"Royal Canin 皇家", name:"S33W 腸胃保健貓主食濕糧", meat:"肉及相關產品、穀物、礦物質、蔬菜纖維、植物蛋白萃取、酵母", weight:85, origin:"奧地利" },
     { id:"W50", brand:"Chérie 法麗", name:"乳酸菌主食貓餐包 雞肉肉泥 毛髮生長", meat:"雞肉28%、木薯澱粉、葵花油、五水硫酸鈣、雞肉粉、膳草豆腐、水解雞蛋白、鮪魚油、亞麻籽油、牛磺酸、植物乳桿菌、七水硫酸鋅、維生素群", weight:40, origin:"泰國" },
   ],
   dry: [
@@ -89,6 +90,7 @@ const FOOD_DB = {
     { id:"D06", brand:"Farmina 法米納 N&D", name:"天然藜麥無穀機能 鵪鶉椰子 QC3", meat:"鵪鶉肉20%", origin:"義大利" },
     { id:"D07", brand:"Royal Canin 皇家", name:"泌尿道保健配方 UC33", meat:"脫水禽肉蛋白", origin:"韓國" },
     { id:"D08", brand:"Royal Canin 皇家", name:"挑食成貓糧 E35", meat:"脫水家禽蛋白", origin:"韓國" },
+    { id:"D14", brand:"Royal Canin 皇家", name:"E33 挑嘴成貓濃郁香味乾糧", meat:"玉米、脫水魚肉、動物脂肪、小麥、脫水禽肉蛋白、玉米麩質、植物分離蛋白、水解動物蛋白、玉米粉、植物纖維、礦物質、甜菜漿、酵母菌、大豆油、魚油、琉璃苣油", origin:"—" },
     { id:"D09", brand:"Orijen 歐睿健", name:"Six Fish 六種鮮魚 全齡無穀", meat:"沙丁魚28%、鱈魚7%", origin:"加拿大" },
     { id:"D10", brand:"Orijen 歐睿健", name:"鮮雞愛貓 全齡無穀鮮肉", meat:"新鮮雞肉20%", origin:"加拿大" },
     { id:"D11", brand:"Royal Canin 皇家", name:"O30 潔牙保健成貓專用乾糧", meat:"脫水禽肉蛋白、米、玉米、動物脂肪、小麥麩質、蔬菜纖維、水解家禽蛋白、小麥、小麥麵粉、玉米粉、玉米麩質、礦物質、甜菜漿、魚油、大豆油、果寡糖、洋車前子殼及籽", origin:"—" },
@@ -100,6 +102,7 @@ const FOOD_DB = {
     { id:"S02", brand:"Antinol 安適得", name:"Rapid 酷版", dosage:"1顆/天", note:"EAB-277® 50mg 綠唇貝PCSO-524®" },
     { id:"S03", brand:"嬌寵醫生", name:"極精萃頂級專利魚油S（酪蛋白舒壓配方）", dosage:"1顆/天", note:"純魚油 Omega-3 95%up" },
     { id:"S04", brand:"Zylkene 健樂靜", name:"犬貓鎮靜愛護靈 75", dosage:"1顆/天", note:"Alpha-Casozepine 255mg" },
+    { id:"S05", brand:"可蒂毛毛", name:"益生菌 —— 汪貓的腸胃保養專家", dosage:"每10公斤體重1～2包/天，加強可再加1包", note:"Fibersol-2膳食纖維、水解蛋白、定序衛腸肽、專利BC30TM芽孢乳酸菌、複合益生菌(Lc-11/Lpc-37/HN019)、果寡糖、優格粉、專利RBE益生素" },
   ],
   dewormer: [
     { id:"P01", brand:"Revolution 寵愛", name:"Selamectin 6% 滴劑", type:"體外驅蟲" },
@@ -1958,9 +1961,11 @@ function AttitudeChart({ records }) {
 function AnalyticsPage({ catId, color }) {
   const [records, setRecords] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
-  const [rangeMode, setRangeMode] = React.useState("range"); // "range" | "month"
+  const [rangeMode, setRangeMode] = React.useState("range"); // "range" | "month" | "custom"
   const [range, setRange] = React.useState(30);
   const [selectedMonth, setSelectedMonth] = React.useState(""); // "YYYY-MM"
+  const [customStart, setCustomStart] = React.useState("");
+  const [customEnd, setCustomEnd] = React.useState("");
   const [subTab, setSubTab] = React.useState("overview");
 
   React.useEffect(()=>{
@@ -1977,6 +1982,8 @@ function AnalyticsPage({ catId, color }) {
 
   const filtered = rangeMode==="month"
     ? records.filter(r=>r.date.startsWith(selectedMonth))
+    : rangeMode==="custom"
+    ? records.filter(r=>(!customStart||r.date>=customStart)&&(!customEnd||r.date<=customEnd))
     : range===0 ? records : records.slice(-range);
 
   const totalDays=filtered.length;
@@ -2022,6 +2029,10 @@ function AnalyticsPage({ catId, color }) {
           style={{flex:1,padding:"8px",borderRadius:50,border:`2px solid ${rangeMode==="month"?color:"rgba(41,128,212,0.2)"}`,background:rangeMode==="month"?`${color}15`:"white",color:rangeMode==="month"?color:"var(--text2)",fontFamily:"var(--font)",fontSize:12,fontWeight:700,cursor:"pointer"}}>
           🗓️ 月份篩選
         </button>
+        <button onClick={()=>setRangeMode("custom")}
+          style={{flex:1,padding:"8px",borderRadius:50,border:`2px solid ${rangeMode==="custom"?color:"rgba(41,128,212,0.2)"}`,background:rangeMode==="custom"?`${color}15`:"white",color:rangeMode==="custom"?color:"var(--text2)",fontFamily:"var(--font)",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+          🔎 區間篩選
+        </button>
       </div>
 
       {rangeMode==="range" && (
@@ -2047,6 +2058,30 @@ function AnalyticsPage({ catId, color }) {
                 fontFamily:"var(--font)",transition:"all .15s",
               }}>{fmtMonth(ym)}</button>
           ))}
+        </div>
+      )}
+
+      {rangeMode==="custom" && (
+        <div style={{padding:"6px 14px 2px",display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
+          <input
+            type="date"
+            value={customStart}
+            onChange={e=>setCustomStart(e.target.value)}
+            style={{padding:"7px 8px",border:`2px solid ${color}33`,borderRadius:8,fontSize:12,fontFamily:"var(--font)",background:"white"}}
+          />
+          <span style={{fontSize:12,color:"var(--text2)",fontWeight:700}}>至</span>
+          <input
+            type="date"
+            value={customEnd}
+            onChange={e=>setCustomEnd(e.target.value)}
+            style={{padding:"7px 8px",border:`2px solid ${color}33`,borderRadius:8,fontSize:12,fontFamily:"var(--font)",background:"white"}}
+          />
+          {(customStart||customEnd)&&(
+            <button
+              onClick={()=>{setCustomStart("");setCustomEnd("");}}
+              style={{padding:"7px 12px",background:"white",color,border:`2px solid ${color}33`,borderRadius:8,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"var(--font)"}}
+            >清除</button>
+          )}
         </div>
       )}
 
@@ -2356,6 +2391,9 @@ function FoodPicker({ type, color, onSelect, onClose }) {
 function HistoryPage({ cat, catId, color, onClose }) {
   const [records, setRecords] = React.useState([]);
   const [expanded, setExpanded] = React.useState(null);
+  const [monthFilter, setMonthFilter] = React.useState("");
+  const [startDate, setStartDate] = React.useState("");
+  const [endDate, setEndDate] = React.useState("");
   React.useEffect(()=>{
     (async()=>{
       const all = await loadAllRecords(catId);
@@ -2385,14 +2423,65 @@ function HistoryPage({ cat, catId, color, onClose }) {
     try{localStorage.removeItem(`daily:${catId}:${date}`);}catch{}
     setRecords(r=>r.filter(x=>x.date!==date));
   };
+  const months = React.useMemo(()=>{
+    const set = new Set(records.map(r=>r.date.slice(0,7)));
+    return [...set].sort().reverse();
+  },[records]);
+  const filtered = React.useMemo(()=>{
+    return records.filter(r=>{
+      if(monthFilter && !r.date.startsWith(monthFilter)) return false;
+      if(startDate && r.date < startDate) return false;
+      if(endDate && r.date > endDate) return false;
+      return true;
+    });
+  },[records, monthFilter, startDate, endDate]);
   return (
     <div className="hist-page">
       <div className="hist-header">
         <button className="hist-back" onClick={onClose}>←</button>
         <span className="hist-title">{cat.name || (catId==="sakura"?"櫻":"樨")} 的所有紀錄</span>
-        <span style={{fontSize:13,fontWeight:700,color:"#80aad4",marginLeft:"auto"}}>{records.length} 筆</span>
+        <span style={{fontSize:13,fontWeight:700,color:"#80aad4",marginLeft:"auto"}}>{filtered.length} / {records.length} 筆</span>
       </div>
       <div className="hist-list">
+        <div style={{background:"#eff6ff",border:"1.5px solid #93c5fd",borderRadius:12,padding:"12px 14px",marginBottom:12}}>
+          <div style={{fontSize:12,fontWeight:800,color:"#1d4ed8",marginBottom:8}}>🔎 日期篩選</div>
+          {months.length>0&&(
+            <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:10}}>
+              <button
+                onClick={()=>{setMonthFilter("");}}
+                style={{padding:"5px 10px",borderRadius:16,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"var(--font)",border:monthFilter===""?"1.5px solid #2563eb":"1.5px solid #bfdbfe",background:monthFilter===""?"#2563eb":"white",color:monthFilter===""?"white":"#2563eb"}}
+              >全部</button>
+              {months.map(m=>(
+                <button
+                  key={m}
+                  onClick={()=>setMonthFilter(monthFilter===m?"":m)}
+                  style={{padding:"5px 10px",borderRadius:16,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"var(--font)",border:monthFilter===m?"1.5px solid #2563eb":"1.5px solid #bfdbfe",background:monthFilter===m?"#2563eb":"white",color:monthFilter===m?"white":"#2563eb"}}
+                >{m}</button>
+              ))}
+            </div>
+          )}
+          <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
+            <input
+              type="date"
+              value={startDate}
+              onChange={e=>setStartDate(e.target.value)}
+              style={{padding:"6px 8px",border:"1.5px solid #93c5fd",borderRadius:8,fontSize:12,fontFamily:"var(--font)",background:"white"}}
+            />
+            <span style={{fontSize:12,color:"#1d4ed8",fontWeight:700}}>至</span>
+            <input
+              type="date"
+              value={endDate}
+              onChange={e=>setEndDate(e.target.value)}
+              style={{padding:"6px 8px",border:"1.5px solid #93c5fd",borderRadius:8,fontSize:12,fontFamily:"var(--font)",background:"white"}}
+            />
+            {(startDate||endDate)&&(
+              <button
+                onClick={()=>{setStartDate("");setEndDate("");}}
+                style={{padding:"6px 10px",background:"white",color:"#1d4ed8",border:"1.5px solid #93c5fd",borderRadius:8,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"var(--font)"}}
+              >清除區間</button>
+            )}
+          </div>
+        </div>
         <div style={{background:"#f0fdf4",border:"1.5px solid #86efac",borderRadius:12,padding:"12px 14px",marginBottom:12}}>
           <div style={{fontSize:12,fontWeight:800,color:"#166534",marginBottom:4}}>📥 匯入備份資料</div>
           <div style={{fontSize:11,color:"#16a34a",fontWeight:600,marginBottom:8}}>將備份的 JSON 文字貼入下方，再點「匯入」</div>
@@ -2434,7 +2523,8 @@ function HistoryPage({ cat, catId, color, onClose }) {
           </button>
         </div>
         {!records.length&&<div className="empty-hint" style={{paddingTop:40,fontSize:15}}>還沒有任何紀錄 🐾</div>}
-        {records.map(r=>(
+        {records.length>0&&!filtered.length&&<div className="empty-hint" style={{paddingTop:40,fontSize:15}}>此區間沒有符合的紀錄 🔍</div>}
+        {filtered.map(r=>(
           <div key={r.date} className="hcard">
             <div className="hrow" onClick={()=>setExpanded(expanded===r.date?null:r.date)}>
               <span className="hdate">{r.date}</span>
