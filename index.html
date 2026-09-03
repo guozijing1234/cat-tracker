@@ -156,6 +156,7 @@ const emptyDaily = () => ({
   playSession:{ played:false, duration:"", toys:[], note:"" },
   outing:{ wentOut:false, duration:"", destination:"", note:"" },
   training:[],
+  dailyCare:{ lightTherapy:{ done:false, time:"", duration:"", power:"" } },
   issues:[], issueCounts:{}, issueNote:"", issueLinks:[],
   breathRate:"", toiletCryTiming:[],
   vomitDetail:{ content:[], color:[], form:"" },
@@ -230,6 +231,12 @@ const TRAINING_STATUS = [
   { v:"勉強接受", color:"#f97316", bg:"#fff7ed" },
   { v:"配合",     color:"#3b82f6", bg:"#eff6ff" },
   { v:"很棒",     color:"#22c55e", bg:"#f0fdf4" },
+];
+const LIGHT_THERAPY_POWERS = [
+  { v:"L1", mw:85 },
+  { v:"L2", mw:170 },
+  { v:"L3", mw:255 },
+  { v:"L4", mw:340 },
 ];
 
 const VOMIT_CONTENT = ["原型食物","未消化食物","泡沫","毛球","異物","血"];
@@ -2550,6 +2557,7 @@ function HistoryPage({ cat, catId, color, onClose }) {
                 {r.wets?.length>0&&<div className="hexp-row"><span className="hexp-k">濕食</span><span>{r.wets.map(w=>`${w.food}${w.weight?` ${w.weight}g`:""}${w.texture?` · ${w.texture}`:""}${w.eaten?` · ${w.eaten}`:""}`).join("；")}</span></div>}
                 {r.drys?.length>0&&<div className="hexp-row"><span className="hexp-k">飼料</span><span>{r.drys.map(d=>d.food).join("、")}</span></div>}
                 {r.training?.length>0&&<div className="hexp-row"><span className="hexp-k">訓練</span><span>{r.training.map(t=>{const item=TRAINING_ITEMS.find(x=>x.id===t.id);return `${item?.icon||""}${item?.label||t.id}${t.status?` (${t.status})`:""} ${t.note?`— ${t.note}`:""}`}).join("、")}</span></div>}
+                {r.dailyCare?.lightTherapy?.done&&<div className="hexp-row"><span className="hexp-k">光療儀</span><span>{r.dailyCare.lightTherapy.time||""}{r.dailyCare.lightTherapy.duration?` ${r.dailyCare.lightTherapy.duration}分鐘`:""}{r.dailyCare.lightTherapy.power?` · ${r.dailyCare.lightTherapy.power}（${LIGHT_THERAPY_POWERS.find(p=>p.v===r.dailyCare.lightTherapy.power)?.mw||""}mW）`:""}</span></div>}
                 {r.playSession?.played&&<div className="hexp-row"><span className="hexp-k">陪玩</span><span>{r.playSession.duration?`${r.playSession.duration}分鐘`:""}{r.playSession.toys?.length?` · ${r.playSession.toys.join("、")}`:""}</span></div>}
                 {r.outing?.wentOut&&<div className="hexp-row"><span className="hexp-k">外出</span><span>{r.outing.duration?`${r.outing.duration}分鐘`:""}{r.outing.destination?` · ${r.outing.destination}`:""}</span></div>}
                 {r.outing?.wentOut&&<div className="hexp-row"><span className="hexp-k">外出</span><span>{r.outing.duration?`${r.outing.duration}分鐘`:""}{r.outing.destination?` · ${r.outing.destination}`:""}</span></div>}
@@ -4844,6 +4852,50 @@ function CatTab({ meta }) {
                   </div>
                 );
               })}
+
+              {/* Daily Care */}
+              <div className="divider"/>
+              <span className="field-label" style={{display:"block",marginBottom:8}}>🩹 日常保養</span>
+              <div
+                className={`activity-toggle${daily.dailyCare?.lightTherapy?.done?" on":""}`}
+                onClick={()=>{ setDirty(true); setDaily(p=>({...p,dailyCare:{...p.dailyCare,lightTherapy:{...p.dailyCare?.lightTherapy,done:!p.dailyCare?.lightTherapy?.done}}})); }}>
+                <div className="activity-toggle-dot"/>
+                <span className="activity-toggle-label">💡 光療儀</span>
+                {daily.dailyCare?.lightTherapy?.power && <span style={{fontSize:12,fontWeight:700,color:"var(--text3)"}}>{daily.dailyCare.lightTherapy.power}</span>}
+              </div>
+              {daily.dailyCare?.lightTherapy?.done && (
+                <div className="activity-expand" style={{marginBottom:10}}>
+                  <div className="row" style={{marginBottom:8}}>
+                    <div style={{flex:1}}>
+                      <span className="field-label">照射時間</span>
+                      <input type="time" className="inp" value={daily.dailyCare?.lightTherapy?.time||""}
+                        onChange={e=>{ setDirty(true); setDaily(p=>({...p,dailyCare:{...p.dailyCare,lightTherapy:{...p.dailyCare?.lightTherapy,time:e.target.value}}})); }}/>
+                    </div>
+                    <div style={{flex:1}}>
+                      <span className="field-label">照射時長（分鐘）</span>
+                      <input type="number" className="inp" value={daily.dailyCare?.lightTherapy?.duration||""}
+                        onChange={e=>{ setDirty(true); setDaily(p=>({...p,dailyCare:{...p.dailyCare,lightTherapy:{...p.dailyCare?.lightTherapy,duration:e.target.value}}})); }}
+                        placeholder="例：10"/>
+                    </div>
+                  </div>
+                  <div>
+                    <span className="field-label" style={{display:"block",marginBottom:6}}>功率</span>
+                    <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                      {LIGHT_THERAPY_POWERS.map(lp=>{
+                        const active = daily.dailyCare?.lightTherapy?.power===lp.v;
+                        return (
+                          <button key={lp.v} type="button"
+                            className={`chip chip-sm${active?" ac":""}`}
+                            style={active?{borderColor:color,background:`${color}12`,color}:{}}
+                            onClick={()=>{ setDirty(true); setDaily(p=>({...p,dailyCare:{...p.dailyCare,lightTherapy:{...p.dailyCare?.lightTherapy,power:p.dailyCare?.lightTherapy?.power===lp.v?"":lp.v}}})); }}>
+                            {lp.v}：{lp.mw}mW
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
