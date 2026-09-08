@@ -2505,7 +2505,20 @@ function HistoryPage({ cat, catId, color, onClose }) {
         </div>
         <div style={{background:"#f0fdf4",border:"1.5px solid #86efac",borderRadius:12,padding:"12px 14px",marginBottom:12}}>
           <div style={{fontSize:12,fontWeight:800,color:"#166534",marginBottom:4}}>📥 匯入備份資料</div>
-          <div style={{fontSize:11,color:"#16a34a",fontWeight:600,marginBottom:8}}>將備份的 JSON 文字貼入下方，再點「匯入」</div>
+          <div style={{fontSize:11,color:"#16a34a",fontWeight:600,marginBottom:8}}>選擇備份的 JSON 檔案，或將 JSON 文字貼入下方，再點「匯入」</div>
+          <input
+            type="file"
+            accept="application/json,.json"
+            style={{width:"100%",marginBottom:8,fontSize:12,fontFamily:"var(--font)",color:"#166534"}}
+            onChange={e=>{
+              const file = e.target.files?.[0];
+              if (!file) return;
+              const reader = new FileReader();
+              reader.onload = (ev) => { document.getElementById("importText").value = ev.target.result; };
+              reader.readAsText(file);
+              e.target.value = "";
+            }}
+          />
           <textarea
             id="importText"
             rows={3}
@@ -2661,37 +2674,15 @@ const downloadJSON = async () => {
   const all = await collectAllData();
   const json = JSON.stringify(all, null, 2);
   await setStorage("backup:lastExport", todayStr());
-
-  const overlay = document.createElement("div");
-  overlay.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;flex-direction:column;padding:16px;gap:10px;";
-  const title = document.createElement("div");
-  title.style.cssText = "color:white;font-size:15px;font-weight:800;font-family:sans-serif;";
-  title.textContent = "📋 請全選並複製以下資料，儲存到備忘錄或文字檔";
-  const ta = document.createElement("textarea");
-  ta.value = json;
-  ta.style.cssText = "flex:1;border-radius:12px;border:none;font-size:11px;padding:12px;font-family:monospace;resize:none;";
-  ta.readOnly = true;
-  const btnRow = document.createElement("div");
-  btnRow.style.cssText = "display:flex;gap:10px;";
-  const copyBtn = document.createElement("button");
-  copyBtn.textContent = "📋 全選複製";
-  copyBtn.style.cssText = "flex:2;padding:13px;background:#3a6fa8;color:white;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:sans-serif;";
-  copyBtn.onclick = async () => {
-    ta.select();
-    try { await navigator.clipboard.writeText(json); } catch { document.execCommand("copy"); }
-    copyBtn.textContent = "✅ 已複製！";
-  };
-  const closeBtn = document.createElement("button");
-  closeBtn.textContent = "關閉";
-  closeBtn.style.cssText = "flex:1;padding:13px;background:rgba(255,255,255,0.2);color:white;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:sans-serif;";
-  closeBtn.onclick = () => document.body.removeChild(overlay);
-  btnRow.appendChild(copyBtn);
-  btnRow.appendChild(closeBtn);
-  overlay.appendChild(title);
-  overlay.appendChild(ta);
-  overlay.appendChild(btnRow);
-  document.body.appendChild(overlay);
-  setTimeout(() => { ta.focus(); ta.select(); }, 100);
+  const blob = new Blob([json], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `貓咪紀錄備份_${todayStr()}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
 };
 
 // ─── FMPI Assessment ──────────────────────────────────────────────────────────
@@ -3860,54 +3851,7 @@ function CatTab({ meta }) {
   };
 
   const exportData = async () => {
-    const all = await collectAllData();
-    const json = JSON.stringify(all, null, 2);
-    await setStorage("backup:lastExport", todayStr());
-
-    // Create overlay modal with copyable text
-    const overlay = document.createElement("div");
-    overlay.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;flex-direction:column;padding:16px;gap:10px;";
-
-    const title = document.createElement("div");
-    title.style.cssText = "color:white;font-size:15px;font-weight:800;font-family:sans-serif;";
-    title.textContent = "📋 請全選並複製以下資料，儲存到備忘錄或文字檔";
-
-    const ta = document.createElement("textarea");
-    ta.value = json;
-    ta.style.cssText = "flex:1;border-radius:12px;border:none;font-size:11px;padding:12px;font-family:monospace;resize:none;";
-    ta.readOnly = true;
-
-    const btnRow = document.createElement("div");
-    btnRow.style.cssText = "display:flex;gap:10px;";
-
-    const copyBtn = document.createElement("button");
-    copyBtn.textContent = "📋 全選複製";
-    copyBtn.style.cssText = "flex:2;padding:13px;background:#3a6fa8;color:white;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:sans-serif;";
-    copyBtn.onclick = async () => {
-      ta.select();
-      try {
-        await navigator.clipboard.writeText(json);
-        copyBtn.textContent = "✅ 已複製！";
-      } catch {
-        document.execCommand("copy");
-        copyBtn.textContent = "✅ 已複製！";
-      }
-    };
-
-    const closeBtn = document.createElement("button");
-    closeBtn.textContent = "關閉";
-    closeBtn.style.cssText = "flex:1;padding:13px;background:rgba(255,255,255,0.2);color:white;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:sans-serif;";
-    closeBtn.onclick = () => document.body.removeChild(overlay);
-
-    btnRow.appendChild(copyBtn);
-    btnRow.appendChild(closeBtn);
-    overlay.appendChild(title);
-    overlay.appendChild(ta);
-    overlay.appendChild(btnRow);
-    document.body.appendChild(overlay);
-
-    // Auto select all
-    setTimeout(() => { ta.focus(); ta.select(); }, 100);
+    await downloadJSON();
   };
   const up=(path,val)=>{
     setDirty(true);
@@ -4007,7 +3951,7 @@ function CatTab({ meta }) {
               <button className="menu-item" onClick={()=>{ setShowMenu(false); exportData(); }}>
                 <div className="menu-item-icon" style={{background:"#f1f5f9"}}>📤</div>
                 <div className="menu-item-text">
-                  <span className="menu-item-title">匯出資料（JSON）</span>
+                  <span className="menu-item-title">下載備份檔（JSON）</span>
                   <span className="menu-item-sub">備份所有紀錄</span>
                 </div>
               </button>
