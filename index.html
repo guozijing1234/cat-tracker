@@ -156,7 +156,7 @@ const emptyDaily = () => ({
   playSession:{ played:false, duration:"", toys:[], note:"" },
   outing:{ wentOut:false, duration:"", destination:"", note:"" },
   training:[],
-  dailyCare:{ lightTherapy:{ done:false, time:"", duration:"", power:"" } },
+  dailyCare:{ lightTherapy:{ done:false, duration:"", power:"" } },
   issues:[], issueCounts:{}, issueNote:"", issueLinks:[],
   breathRate:"", toiletCryTiming:[],
   vomitDetail:{ content:[], color:[], form:"" },
@@ -774,6 +774,15 @@ const css = `
   border-radius: 10px;
 }
 .card-body { padding: 12px 18px 18px; }
+.card-body-collapsed { display: none; }
+.card-head-right { display:flex; align-items:center; gap:8px; }
+.card-chevron {
+  display:flex; align-items:center; justify-content:center;
+  width:24px; height:24px; flex-shrink:0;
+  color: var(--text3); font-size: 13px; font-weight:900;
+  transition: transform .2s ease;
+}
+.card-chevron.open { transform: rotate(180deg); }
 
 /* ── Form fields ── */
 .field-label {
@@ -2557,7 +2566,7 @@ function HistoryPage({ cat, catId, color, onClose }) {
                 {r.wets?.length>0&&<div className="hexp-row"><span className="hexp-k">濕食</span><span>{r.wets.map(w=>`${w.food}${w.weight?` ${w.weight}g`:""}${w.texture?` · ${w.texture}`:""}${w.eaten?` · ${w.eaten}`:""}`).join("；")}</span></div>}
                 {r.drys?.length>0&&<div className="hexp-row"><span className="hexp-k">飼料</span><span>{r.drys.map(d=>d.food).join("、")}</span></div>}
                 {r.training?.length>0&&<div className="hexp-row"><span className="hexp-k">訓練</span><span>{r.training.map(t=>{const item=TRAINING_ITEMS.find(x=>x.id===t.id);return `${item?.icon||""}${item?.label||t.id}${t.status?` (${t.status})`:""} ${t.note?`— ${t.note}`:""}`}).join("、")}</span></div>}
-                {r.dailyCare?.lightTherapy?.done&&<div className="hexp-row"><span className="hexp-k">光療儀</span><span>{r.dailyCare.lightTherapy.time||""}{r.dailyCare.lightTherapy.duration?` ${r.dailyCare.lightTherapy.duration}分鐘`:""}{r.dailyCare.lightTherapy.power?` · ${r.dailyCare.lightTherapy.power}（${LIGHT_THERAPY_POWERS.find(p=>p.v===r.dailyCare.lightTherapy.power)?.mw||""}mW）`:""}</span></div>}
+                {r.dailyCare?.lightTherapy?.done&&<div className="hexp-row"><span className="hexp-k">光療儀</span><span>{r.dailyCare.lightTherapy.duration?`${r.dailyCare.lightTherapy.duration}分鐘`:""}{r.dailyCare.lightTherapy.power?` · ${r.dailyCare.lightTherapy.power}（${LIGHT_THERAPY_POWERS.find(p=>p.v===r.dailyCare.lightTherapy.power)?.mw||""}mW）`:""}</span></div>}
                 {r.playSession?.played&&<div className="hexp-row"><span className="hexp-k">陪玩</span><span>{r.playSession.duration?`${r.playSession.duration}分鐘`:""}{r.playSession.toys?.length?` · ${r.playSession.toys.join("、")}`:""}</span></div>}
                 {r.outing?.wentOut&&<div className="hexp-row"><span className="hexp-k">外出</span><span>{r.outing.duration?`${r.outing.duration}分鐘`:""}{r.outing.destination?` · ${r.outing.destination}`:""}</span></div>}
                 {r.outing?.wentOut&&<div className="hexp-row"><span className="hexp-k">外出</span><span>{r.outing.duration?`${r.outing.duration}分鐘`:""}{r.outing.destination?` · ${r.outing.destination}`:""}</span></div>}
@@ -3644,6 +3653,25 @@ function CatTab({ meta }) {
   const [freqWets, setFreqWets] = React.useState([]);
   const [freqDrys, setFreqDrys] = React.useState([]);
   const [freqMeds, setFreqMeds] = React.useState([]);
+  const [collapsed, setCollapsed] = React.useState({});
+  const toggleCard = (key) => setCollapsed(p=>({...p, [key]: !p[key]}));
+  const hasCardData = (key, d) => {
+    switch(key){
+      case "wet": return (d.wets||[]).length>0;
+      case "dry": return (d.drys||[]).length>0;
+      case "supplement": return (d.supplements||[]).length>0 || !!d.dailyCare?.lightTherapy?.done;
+      case "snack": return (d.snacks||[]).length>0;
+      case "dewormer": return (d.dewormers||[]).length>0;
+      case "poop": return !!(d.poopLog?.count||d.poopLog?.type||(d.poopLog?.color||[]).length||(d.poopLog?.extras||[]).length||d.poopLog?.note);
+      case "issues": return (d.issues||[]).length>0;
+      case "activity": return !!(d.playSession?.played||d.outing?.wentOut||(d.training||[]).length>0);
+      case "meds": return (d.meds||[]).length>0;
+      case "vet": return (d.vetVisits||[]).length>0;
+      case "note": return !!(d.note&&d.note.trim());
+      default: return false;
+    }
+  };
+  const CARD_KEYS = ["wet","dry","supplement","snack","dewormer","poop","issues","activity","meds","vet","note"];
 
   React.useEffect(()=>{
     (async()=>{
@@ -3706,8 +3734,12 @@ function CatTab({ meta }) {
   React.useEffect(()=>{
     (async()=>{
       const d=await getStorage(`daily:${catId}:${date}`);
-      setDaily(d||emptyDaily());
+      const dd = d||emptyDaily();
+      setDaily(dd);
       setDirty(false);
+      const initCollapsed = {};
+      CARD_KEYS.forEach(k=>{ initCollapsed[k] = !hasCardData(k, dd); });
+      setCollapsed(initCollapsed);
       const allKeys=await (async()=>{ const _p=`daily:${catId}:`; const _k=[]; for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k&&k.startsWith(_p))_k.push(k); } return {keys:_k}; })();
       const sorted=(allKeys?.keys||[]).filter(k=>k<`daily:${catId}:${date}`).sort().reverse();
       let pw=null;
@@ -4130,14 +4162,17 @@ function CatTab({ meta }) {
 
           {/* Wet food */}
           <div className="card">
-            <div className="card-head">
+            <div className="card-head" style={{cursor:"pointer"}} onClick={()=>toggleCard("wet")}>
               <div className="card-title"><div className="card-icon" style={iconBg("#06b6d4")}>🐟</div>濕食</div>
-              <div className="add-row">
-                <button className="add-btn add-p" style={{borderColor:color,color}} onClick={()=>setPicker({type:"wet"})}>＋ 食品庫</button>
-                <button className="add-btn add-s" onClick={()=>add("wets",emptyWet())}>＋ 手動</button>
+              <div className="card-head-right">
+                <div className="add-row" onClick={e=>e.stopPropagation()}>
+                  <button className="add-btn add-p" style={{borderColor:color,color}} onClick={()=>setPicker({type:"wet"})}>＋ 食品庫</button>
+                  <button className="add-btn add-s" onClick={()=>add("wets",emptyWet())}>＋ 手動</button>
+                </div>
+                <span className={`card-chevron${collapsed.wet?"":" open"}`}>▾</span>
               </div>
             </div>
-            <div className="card-body">
+            <div className={`card-body${collapsed.wet?" card-body-collapsed":""}`}>
               {freqWets.length>0 && (
                 <div style={{marginBottom:8}}>
                   <div style={{fontSize:10,fontWeight:800,color:"var(--text3)",letterSpacing:".4px",textTransform:"uppercase",marginBottom:5}}>⚡ 常用</div>
@@ -4239,14 +4274,17 @@ function CatTab({ meta }) {
 
           {/* Dry food */}
           <div className="card">
-            <div className="card-head">
+            <div className="card-head" style={{cursor:"pointer"}} onClick={()=>toggleCard("dry")}>
               <div className="card-title"><div className="card-icon" style={iconBg("#f59e0b")}>🌾</div>飼料</div>
-              <div className="add-row">
-                <button className="add-btn add-p" style={{borderColor:color,color}} onClick={()=>setPicker({type:"dry"})}>＋ 食品庫</button>
-                <button className="add-btn add-s" onClick={()=>add("drys",emptyDry())}>＋ 手動</button>
+              <div className="card-head-right">
+                <div className="add-row" onClick={e=>e.stopPropagation()}>
+                  <button className="add-btn add-p" style={{borderColor:color,color}} onClick={()=>setPicker({type:"dry"})}>＋ 食品庫</button>
+                  <button className="add-btn add-s" onClick={()=>add("drys",emptyDry())}>＋ 手動</button>
+                </div>
+                <span className={`card-chevron${collapsed.dry?"":" open"}`}>▾</span>
               </div>
             </div>
-            <div className="card-body">
+            <div className={`card-body${collapsed.dry?" card-body-collapsed":""}`}>
               {freqDrys.length>0 && (
                 <div style={{marginBottom:8}}>
                   <div style={{fontSize:10,fontWeight:800,color:"var(--text3)",letterSpacing:".4px",textTransform:"uppercase",marginBottom:5}}>⚡ 常用</div>
@@ -4277,14 +4315,17 @@ function CatTab({ meta }) {
 
           {/* Supplements */}
           <div className="card">
-            <div className="card-head">
-              <div className="card-title"><div className="card-icon" style={iconBg("#8b5cf6")}>💊</div>保健品</div>
-              <div className="add-row">
-                <button className="add-btn add-p" style={{borderColor:color,color}} onClick={()=>setPicker({type:"supplement"})}>＋ 資料庫</button>
-                <button className="add-btn add-s" onClick={()=>add("supplements",{name:"",dose:"",note:""})}>＋ 手動</button>
+            <div className="card-head" style={{cursor:"pointer"}} onClick={()=>toggleCard("supplement")}>
+              <div className="card-title"><div className="card-icon" style={iconBg("#8b5cf6")}>💊</div>保養</div>
+              <div className="card-head-right">
+                <div className="add-row" onClick={e=>e.stopPropagation()}>
+                  <button className="add-btn add-p" style={{borderColor:color,color}} onClick={()=>setPicker({type:"supplement"})}>＋ 資料庫</button>
+                  <button className="add-btn add-s" onClick={()=>add("supplements",{name:"",dose:"",note:""})}>＋ 手動</button>
+                </div>
+                <span className={`card-chevron${collapsed.supplement?"":" open"}`}>▾</span>
               </div>
             </div>
-            <div className="card-body">
+            <div className={`card-body${collapsed.supplement?" card-body-collapsed":""}`}>
               {!(daily.supplements||[]).length&&<div className="empty-hint">尚未記錄</div>}
               {(daily.supplements||[]).map((s,i)=>(
                 <div key={i} className="sub-item">
@@ -4296,19 +4337,61 @@ function CatTab({ meta }) {
                   <input className="inp" value={s.note} onChange={e=>upItem("supplements",i,"note",e.target.value)} placeholder="備註"/>
                 </div>
               ))}
+
+              {/* Equipment Maintenance */}
+              <div className="divider"/>
+              <span className="field-label" style={{display:"block",marginBottom:8}}>🔧 器材保養</span>
+              <div
+                className={`activity-toggle${daily.dailyCare?.lightTherapy?.done?" on":""}`}
+                onClick={()=>{ setDirty(true); setDaily(p=>({...p,dailyCare:{...p.dailyCare,lightTherapy:{...p.dailyCare?.lightTherapy,done:!p.dailyCare?.lightTherapy?.done}}})); }}>
+                <div className="activity-toggle-dot"/>
+                <span className="activity-toggle-label">💡 光療儀</span>
+                {daily.dailyCare?.lightTherapy?.power && <span style={{fontSize:12,fontWeight:700,color:"var(--text3)"}}>{daily.dailyCare.lightTherapy.power}</span>}
+              </div>
+              {daily.dailyCare?.lightTherapy?.done && (
+                <div className="activity-expand" style={{marginBottom:10}}>
+                  <div className="row" style={{marginBottom:8}}>
+                    <div style={{flex:1}}>
+                      <span className="field-label">照射時長（分鐘）</span>
+                      <input type="number" className="inp" value={daily.dailyCare?.lightTherapy?.duration||""}
+                        onChange={e=>{ setDirty(true); setDaily(p=>({...p,dailyCare:{...p.dailyCare,lightTherapy:{...p.dailyCare?.lightTherapy,duration:e.target.value}}})); }}
+                        placeholder="例：10"/>
+                    </div>
+                  </div>
+                  <div>
+                    <span className="field-label" style={{display:"block",marginBottom:6}}>功率</span>
+                    <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                      {LIGHT_THERAPY_POWERS.map(lp=>{
+                        const active = daily.dailyCare?.lightTherapy?.power===lp.v;
+                        return (
+                          <button key={lp.v} type="button"
+                            className={`chip chip-sm${active?" ac":""}`}
+                            style={active?{borderColor:color,background:`${color}12`,color}:{}}
+                            onClick={()=>{ setDirty(true); setDaily(p=>({...p,dailyCare:{...p.dailyCare,lightTherapy:{...p.dailyCare?.lightTherapy,power:p.dailyCare?.lightTherapy?.power===lp.v?"":lp.v}}})); }}>
+                            {lp.v}：{lp.mw}mW
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
           {/* Snacks */}
           <div className="card">
-            <div className="card-head">
+            <div className="card-head" style={{cursor:"pointer"}} onClick={()=>toggleCard("snack")}>
               <div className="card-title"><div className="card-icon" style={iconBg("#ec4899")}>🍡</div>零食 / 肉泥</div>
-              <div className="add-row">
-                <button className="add-btn add-p" style={{borderColor:color,color}} onClick={()=>setPicker({type:"snack"})}>＋ 資料庫</button>
-                <button className="add-btn add-s" onClick={()=>add("snacks",{type:"",ingredients:"",amount:""})}>＋ 手動</button>
+              <div className="card-head-right">
+                <div className="add-row" onClick={e=>e.stopPropagation()}>
+                  <button className="add-btn add-p" style={{borderColor:color,color}} onClick={()=>setPicker({type:"snack"})}>＋ 資料庫</button>
+                  <button className="add-btn add-s" onClick={()=>add("snacks",{type:"",ingredients:"",amount:""})}>＋ 手動</button>
+                </div>
+                <span className={`card-chevron${collapsed.snack?"":" open"}`}>▾</span>
               </div>
             </div>
-            <div className="card-body">
+            <div className={`card-body${collapsed.snack?" card-body-collapsed":""}`}>
               {!(daily.snacks||[]).length&&<div className="empty-hint">尚未記錄</div>}
               {(daily.snacks||[]).map((s,i)=>(
                 <div key={i} className="sub-item">
@@ -4344,11 +4427,14 @@ function CatTab({ meta }) {
 
           {/* Dewormers */}
           <div className="card">
-            <div className="card-head">
+            <div className="card-head" style={{cursor:"pointer"}} onClick={()=>toggleCard("dewormer")}>
               <div className="card-title"><div className="card-icon" style={iconBg("#10b981")}>💉</div>驅蟲藥</div>
-              <button className="add-btn add-s" onClick={()=>add("dewormers",{name:"",method:"",type:"",note:""})}>＋ 新增</button>
+              <div className="card-head-right">
+                <button className="add-btn add-s" onClick={(e)=>{e.stopPropagation();add("dewormers",{name:"",method:"",type:"",note:""});}}>＋ 新增</button>
+                <span className={`card-chevron${collapsed.dewormer?"":" open"}`}>▾</span>
+              </div>
             </div>
-            <div className="card-body">
+            <div className={`card-body${collapsed.dewormer?" card-body-collapsed":""}`}>
               {!(daily.dewormers||[]).length&&<div className="empty-hint">尚未記錄</div>}
               {(daily.dewormers||[]).map((d,i)=>(
                 <div key={i} className="sub-item">
@@ -4391,10 +4477,11 @@ function CatTab({ meta }) {
 
           {/* Poop log */}
           <div className="card">
-            <div className="card-head">
+            <div className="card-head" style={{cursor:"pointer"}} onClick={()=>toggleCard("poop")}>
               <div className="card-title"><div className="card-icon" style={iconBg("#92400e")}>💩</div>便便紀錄</div>
+              <span className={`card-chevron${collapsed.poop?"":" open"}`}>▾</span>
             </div>
-            <div className="card-body">
+            <div className={`card-body${collapsed.poop?" card-body-collapsed":""}`}>
               {/* 頻率 */}
               <div className="field-group">
                 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
@@ -4477,11 +4564,14 @@ function CatTab({ meta }) {
 
           {/* Issues */}
           <div className="card">
-            <div className="card-head">
+            <div className="card-head" style={{cursor:"pointer"}} onClick={()=>toggleCard("issues")}>
               <div className="card-title"><div className="card-icon" style={iconBg("#ef4444")}>⚠️</div>問題狀況</div>
-              {daily.issues?.length>0&&<span style={{fontSize:12,fontWeight:800,color:"#dc2626",background:"#fef2f2",padding:"4px 12px",borderRadius:50}}>{daily.issues.length} 項</span>}
+              <div className="card-head-right">
+                {daily.issues?.length>0&&<span style={{fontSize:12,fontWeight:800,color:"#dc2626",background:"#fef2f2",padding:"4px 12px",borderRadius:50}}>{daily.issues.length} 項</span>}
+                <span className={`card-chevron${collapsed.issues?"":" open"}`}>▾</span>
+              </div>
             </div>
-            <div className="card-body">
+            <div className={`card-body${collapsed.issues?" card-body-collapsed":""}`}>
               {ISSUES.map(g=>(
                 <div key={g.g} className="iss-grp">
                   <div className="iss-grp-lbl"><span>{g.icon}</span>{g.g}</div>
@@ -4682,10 +4772,11 @@ function CatTab({ meta }) {
 
           {/* Activity log */}
           <div className="card">
-            <div className="card-head">
+            <div className="card-head" style={{cursor:"pointer"}} onClick={()=>toggleCard("activity")}>
               <div className="card-title"><div className="card-icon" style={{background:"#fef9c3"}}>🎮</div>活動紀錄</div>
+              <span className={`card-chevron${collapsed.activity?"":" open"}`}>▾</span>
             </div>
-            <div className="card-body">
+            <div className={`card-body${collapsed.activity?" card-body-collapsed":""}`}>
               {/* Play session */}
               <div
                 className={`activity-toggle${daily.playSession?.played?" on":""}`}
@@ -4852,60 +4943,19 @@ function CatTab({ meta }) {
                   </div>
                 );
               })}
-
-              {/* Daily Care */}
-              <div className="divider"/>
-              <span className="field-label" style={{display:"block",marginBottom:8}}>🩹 日常保養</span>
-              <div
-                className={`activity-toggle${daily.dailyCare?.lightTherapy?.done?" on":""}`}
-                onClick={()=>{ setDirty(true); setDaily(p=>({...p,dailyCare:{...p.dailyCare,lightTherapy:{...p.dailyCare?.lightTherapy,done:!p.dailyCare?.lightTherapy?.done}}})); }}>
-                <div className="activity-toggle-dot"/>
-                <span className="activity-toggle-label">💡 光療儀</span>
-                {daily.dailyCare?.lightTherapy?.power && <span style={{fontSize:12,fontWeight:700,color:"var(--text3)"}}>{daily.dailyCare.lightTherapy.power}</span>}
-              </div>
-              {daily.dailyCare?.lightTherapy?.done && (
-                <div className="activity-expand" style={{marginBottom:10}}>
-                  <div className="row" style={{marginBottom:8}}>
-                    <div style={{flex:1}}>
-                      <span className="field-label">照射時間</span>
-                      <input type="time" className="inp" value={daily.dailyCare?.lightTherapy?.time||""}
-                        onChange={e=>{ setDirty(true); setDaily(p=>({...p,dailyCare:{...p.dailyCare,lightTherapy:{...p.dailyCare?.lightTherapy,time:e.target.value}}})); }}/>
-                    </div>
-                    <div style={{flex:1}}>
-                      <span className="field-label">照射時長（分鐘）</span>
-                      <input type="number" className="inp" value={daily.dailyCare?.lightTherapy?.duration||""}
-                        onChange={e=>{ setDirty(true); setDaily(p=>({...p,dailyCare:{...p.dailyCare,lightTherapy:{...p.dailyCare?.lightTherapy,duration:e.target.value}}})); }}
-                        placeholder="例：10"/>
-                    </div>
-                  </div>
-                  <div>
-                    <span className="field-label" style={{display:"block",marginBottom:6}}>功率</span>
-                    <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-                      {LIGHT_THERAPY_POWERS.map(lp=>{
-                        const active = daily.dailyCare?.lightTherapy?.power===lp.v;
-                        return (
-                          <button key={lp.v} type="button"
-                            className={`chip chip-sm${active?" ac":""}`}
-                            style={active?{borderColor:color,background:`${color}12`,color}:{}}
-                            onClick={()=>{ setDirty(true); setDaily(p=>({...p,dailyCare:{...p.dailyCare,lightTherapy:{...p.dailyCare?.lightTherapy,power:p.dailyCare?.lightTherapy?.power===lp.v?"":lp.v}}})); }}>
-                            {lp.v}：{lp.mw}mW
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
 
           {/* Medications */}
           <div className="card">
-            <div className="card-head">
+            <div className="card-head" style={{cursor:"pointer"}} onClick={()=>toggleCard("meds")}>
               <div className="card-title"><div className="card-icon" style={{background:"#d1fae5"}}>💊</div>吃藥紀錄</div>
-              <button className="add-btn" style={{borderColor:"#10b981",color:"#10b981"}} onClick={()=>add("meds",emptyMed())}>＋ 新增</button>
+              <div className="card-head-right">
+                <button className="add-btn" style={{borderColor:"#10b981",color:"#10b981"}} onClick={(e)=>{e.stopPropagation();add("meds",emptyMed());}}>＋ 新增</button>
+                <span className={`card-chevron${collapsed.meds?"":" open"}`}>▾</span>
+              </div>
             </div>
-            <div className="card-body">
+            <div className={`card-body${collapsed.meds?" card-body-collapsed":""}`}>
               {freqMeds.length>0 && (
                 <div style={{marginBottom:8}}>
                   <div style={{fontSize:10,fontWeight:800,color:"var(--text3)",letterSpacing:".4px",textTransform:"uppercase",marginBottom:5}}>⚡ 常用</div>
@@ -4987,11 +5037,14 @@ function CatTab({ meta }) {
 
           {/* Vet visits */}
           <div className="card">
-            <div className="card-head">
+            <div className="card-head" style={{cursor:"pointer"}} onClick={()=>toggleCard("vet")}>
               <div className="card-title"><div className="card-icon" style={{background:"#dbeafe"}}>🏥</div>就醫紀錄</div>
-              <button className="add-btn" style={{borderColor:"#3b82f6",color:"#3b82f6"}} onClick={()=>add("vetVisits",emptyVet())}>＋ 新增</button>
+              <div className="card-head-right">
+                <button className="add-btn" style={{borderColor:"#3b82f6",color:"#3b82f6"}} onClick={(e)=>{e.stopPropagation();add("vetVisits",emptyVet());}}>＋ 新增</button>
+                <span className={`card-chevron${collapsed.vet?"":" open"}`}>▾</span>
+              </div>
             </div>
-            <div className="card-body">
+            <div className={`card-body${collapsed.vet?" card-body-collapsed":""}`}>
               {!(daily.vetVisits||[]).length && <div className="empty-hint">今日無就醫紀錄</div>}
               {(daily.vetVisits||[]).map((v,i)=>(
                 <div key={i} className="vet-item">
@@ -5045,8 +5098,8 @@ function CatTab({ meta }) {
 
           {/* Notes */}
           <div className="card">
-            <div className="card-head"><div className="card-title"><div className="card-icon" style={iconBg("#64748b")}>📝</div>每日備註</div></div>
-            <div className="card-body">
+            <div className="card-head" style={{cursor:"pointer"}} onClick={()=>toggleCard("note")}><div className="card-title"><div className="card-icon" style={iconBg("#64748b")}>📝</div>每日備註</div><span className={`card-chevron${collapsed.note?"":" open"}`}>▾</span></div>
+            <div className={`card-body${collapsed.note?" card-body-collapsed":""}`}>
               <textarea className="inp" value={daily.note} onChange={e=>up("note",e.target.value)} rows={3} placeholder="其他觀察、獸醫建議…"/>
             </div>
           </div>
