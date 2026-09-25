@@ -29,6 +29,7 @@
 // ─── Food Database ────────────────────────────────────────────────────────────
 const FOOD_DB = {
   wet: [
+    { id:"W57", brand:"乖乖吃飯", name:"香煨嫩雞", meat:"雞肉、雞肝、雞胗、甘藷、洋車前子、牛磺酸、綜合維生素（維生素A、維生素E、維生素B1、維生素B2、維生素B6、維生素B12、維生素C、菸鹼素）、綜合礦物質、碳酸鈣、水", weight:undefined, origin:"台灣" },
     { id:"W01", brand:"銀湯匙", name:"鮪魚 鰹魚 吻仔魚", meat:"鮪魚、鰹魚、吻仔魚", weight:70, origin:"泰國" },
     { id:"W02", brand:"銀湯匙", name:"鮪魚 鰹魚 柴魚片", meat:"鮪魚、鰹魚、柴魚片", weight:70, origin:"泰國" },
     { id:"W03", brand:"AIXIA 愛喜雅", name:"金缶1號 鮪魚", meat:"鮪魚", weight:70, origin:"日本" },
@@ -82,6 +83,7 @@ const FOOD_DB = {
     { id:"W46", brand:"SEEDS MiCo 咪湯", name:"機能湯罐 鮪魚＋雞肉", meat:"水、鮪魚、雞肉、木薯修飾澱粉、瓜爾膠", weight:85, origin:"泰國" },
     { id:"W47", brand:"GimCat ShinyCat Jelly", name:"鮮嫩雞胸肉佐蟹肉（紅色）", meat:"雞胸肉50%、雞湯、蟹肉4%、米、氯化鉀", weight:70, origin:"—" },
     { id:"W48", brand:"肉球世界 Paw Paw Land", name:"南極磷蝦大肉包 雞肉×蔓越莓 泥狀", meat:"水、雞肉、雞肝、雞心、南極磷蝦油、蛋黃粉、南極磷蝦粉、蒟蒻粉、碳酸鈣、蔓越莓、酵母粉、牛磺酸", weight:45, origin:"台灣" },
+    { id:"W58", brand:"肉球世界 Paw Paw Land", name:"南極磷蝦補水炸彈 雞肉×蔓越莓&洛神花（泌尿道系統保健）", meat:"泰山純水、雞胸肉、雞肝、雞心、Aker Biomarine南極磷蝦油、綜合礦物質（鈣、鎂、磷、鉀、鐵、鈉、鋅、銅、碘）、蛋黃粉、海藻鈣、蒟蒻粉、綜合B群、酵母粉、羧甲基纖維素、魚水解蛋白、牛磺酸、洋車前子、蔬菜粉、蔓越莓萃取、洛神花萃取", weight:45, origin:"台灣" },
     { id:"W49", brand:"Royal Canin 皇家", name:"UC33W 泌尿道保健貓主食濕糧", meat:"肉及相關產品、穀物、礦物質、蔬菜纖維、酵母", weight:85, origin:"奧地利" },
     { id:"W51", brand:"Royal Canin 皇家", name:"S33W 腸胃保健貓主食濕糧", meat:"肉及相關產品、穀物、礦物質、蔬菜纖維、植物蛋白萃取、酵母", weight:85, origin:"奧地利" },
     { id:"W50", brand:"Chérie 法麗", name:"乳酸菌主食貓餐包 雞肉肉泥 毛髮生長", meat:"雞肉28%、木薯澱粉、葵花油、五水硫酸鈣、雞肉粉、膳草豆腐、水解雞蛋白、鮪魚油、亞麻籽油、牛磺酸、植物乳桿菌、七水硫酸鋅、維生素群", weight:40, origin:"泰國" },
@@ -775,6 +777,27 @@ const css = `
 }
 .card-body { padding: 0 18px 16px; }
 .card-body > *:last-child { margin-bottom: 0 !important; }
+.card-group {
+  background: rgba(41,128,212,0.04);
+  border-radius: var(--radius);
+  border: 1.5px solid rgba(41,128,212,0.12);
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+.card-group-head {
+  display: flex; align-items:center; justify-content:space-between;
+  padding: 14px 16px;
+  cursor: pointer; user-select: none;
+}
+.card-group-title {
+  display: flex; align-items:center; gap:8px;
+  font-size: 14px; font-weight: 800; color: var(--text2);
+  text-transform: none;
+}
+.card-group-body { padding: 0 8px 8px; }
+.card-group-body-collapsed { display: none; }
+.card-group .card { box-shadow: none; margin-bottom: 8px; }
+.card-group .card:last-child { margin-bottom: 0; }
 .card-body-collapsed { display: none; }
 .card-head-right { display:flex; align-items:center; gap:8px; }
 .card-chevron {
@@ -3647,6 +3670,9 @@ function CatTab({ meta }) {
   const [freqMeds, setFreqMeds] = React.useState([]);
   const [collapsed, setCollapsed] = React.useState({});
   const toggleCard = (key) => setCollapsed(p=>({...p, [key]: !p[key]}));
+  const [groupCollapsed, setGroupCollapsed] = React.useState({});
+  const toggleGroup = (key) => setGroupCollapsed(p=>({...p, [key]: !p[key]}));
+  const GROUP_KEYS = { diet:["wet","dry","supplement","snack"], health:["dewormer","poop","issues","meds","vet"] };
   const hasCardData = (key, d) => {
     switch(key){
       case "wet": return (d.wets||[]).length>0;
@@ -3732,6 +3758,9 @@ function CatTab({ meta }) {
       const initCollapsed = {};
       CARD_KEYS.forEach(k=>{ initCollapsed[k] = !hasCardData(k, dd); });
       setCollapsed(initCollapsed);
+      const initGroupCollapsed = {};
+      Object.entries(GROUP_KEYS).forEach(([g,keys])=>{ initGroupCollapsed[g] = !keys.some(k=>hasCardData(k, dd)); });
+      setGroupCollapsed(initGroupCollapsed);
       const allKeys=await (async()=>{ const _p=`daily:${catId}:`; const _k=[]; for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k&&k.startsWith(_p))_k.push(k); } return {keys:_k}; })();
       const sorted=(allKeys?.keys||[]).filter(k=>k<`daily:${catId}:${date}`).sort().reverse();
       let pw=null;
@@ -3865,6 +3894,28 @@ function CatTab({ meta }) {
   const add=(k,o)=>{ setDirty(true); setDaily(p=>({...p,[k]:[...(p[k]||[]),o]})); };
   const rem=(k,i)=>{ setDirty(true); setDaily(p=>({...p,[k]:p[k].filter((_,j)=>j!==i)})); };
   const upItem=(k,i,f,v)=>{ setDirty(true); setDaily(p=>({...p,[k]:p[k].map((x,j)=>j===i?{...x,[f]:v}:x)})); };
+  const copyDietFrom = async (daysAgo) => {
+    const hasExisting = (daily.wets?.length>0)||(daily.drys?.length>0)||(daily.supplements?.length>0)||(daily.snacks?.length>0);
+    if (hasExisting && !confirm(`目前已有飲食紀錄，套用「${daysAgo===1?"昨天":"前天"}」的內容將覆蓋現有資料，確定要繼續嗎？`)) return;
+    const d = new Date(date);
+    d.setDate(d.getDate()-daysAgo);
+    const targetDate = d.toISOString().slice(0,10);
+    const rec = await getStorage(`daily:${catId}:${targetDate}`);
+    if (!rec || !((rec.wets?.length>0)||(rec.drys?.length>0)||(rec.supplements?.length>0)||(rec.snacks?.length>0))) {
+      alert(`${daysAgo===1?"昨天":"前天"}（${targetDate}）沒有飲食紀錄可以套用。`);
+      return;
+    }
+    setDirty(true);
+    setDaily(p=>({
+      ...p,
+      wets: rec.wets ? JSON.parse(JSON.stringify(rec.wets)) : [],
+      drys: rec.drys ? JSON.parse(JSON.stringify(rec.drys)) : [],
+      supplements: rec.supplements ? JSON.parse(JSON.stringify(rec.supplements)) : [],
+      snacks: rec.snacks ? JSON.parse(JSON.stringify(rec.snacks)) : [],
+    }));
+    setCollapsed(p=>({...p, wet:false, dry:false, supplement:false, snack:false}));
+    setGroupCollapsed(p=>({...p, diet:false}));
+  };
   const togIss=(v)=>{ setDirty(true); setDaily(p=>({...p,issues:p.issues.includes(v)?p.issues.filter(x=>x!==v):[...p.issues,v]})); };
   const diff=daily.weight&&prevWeight?(parseFloat(daily.weight)-parseFloat(prevWeight)).toFixed(1):null;
 
@@ -4105,6 +4156,17 @@ function CatTab({ meta }) {
             </div>
           </div>
 
+          <div className="card-group">
+            <div className="card-group-head" onClick={()=>toggleGroup("diet")}>
+              <div className="card-group-title">🍽️ 飲食</div>
+              <span className={`card-chevron${groupCollapsed.diet?"":" open"}`}>▾</span>
+            </div>
+            <div className={`card-group-body${groupCollapsed.diet?" card-group-body-collapsed":""}`}>
+              <div style={{display:"flex",alignItems:"center",gap:8,padding:"6px 8px 10px",flexWrap:"wrap"}}>
+                <span style={{fontSize:11,fontWeight:800,color:"var(--text3)"}}>📋 套用：</span>
+                <button type="button" className="chip chip-sm" onClick={()=>copyDietFrom(1)}>昨天</button>
+                <button type="button" className="chip chip-sm" onClick={()=>copyDietFrom(2)}>前天</button>
+              </div>
           {/* Wet food */}
           <div className="card">
             <div className="card-head" style={{cursor:"pointer"}} onClick={()=>toggleCard("wet")}>
@@ -4369,7 +4431,15 @@ function CatTab({ meta }) {
               ))}
             </div>
           </div>
+            </div>
+          </div>
 
+          <div className="card-group">
+            <div className="card-group-head" onClick={()=>toggleGroup("health")}>
+              <div className="card-group-title">🏥 健康</div>
+              <span className={`card-chevron${groupCollapsed.health?"":" open"}`}>▾</span>
+            </div>
+            <div className={`card-group-body${groupCollapsed.health?" card-group-body-collapsed":""}`}>
           {/* Dewormers */}
           <div className="card">
             <div className="card-head" style={{cursor:"pointer"}} onClick={()=>toggleCard("dewormer")}>
@@ -4715,6 +4785,158 @@ function CatTab({ meta }) {
             </div>
           </div>
 
+          {/* Medications */}
+          <div className="card">
+            <div className="card-head" style={{cursor:"pointer"}} onClick={()=>toggleCard("meds")}>
+              <div className="card-title"><div className="card-icon" style={{background:"#d1fae5"}}>💊</div>吃藥紀錄</div>
+              <div className="card-head-right">
+                <button className="add-btn" style={{borderColor:"#10b981",color:"#10b981"}} onClick={(e)=>{e.stopPropagation();add("meds",emptyMed());}}>＋ 新增</button>
+                <span className={`card-chevron${collapsed.meds?"":" open"}`}>▾</span>
+              </div>
+            </div>
+            <div className={`card-body${collapsed.meds?" card-body-collapsed":""}`}>
+              {freqMeds.length>0 && (
+                <div style={{marginBottom:8}}>
+                  <div style={{fontSize:10,fontWeight:800,color:"var(--text3)",letterSpacing:".4px",textTransform:"uppercase",marginBottom:5}}>⚡ 常用</div>
+                  <div className="quick-fill-row">
+                    {freqMeds.map((m,i)=>(
+                      <button key={i} className="quick-fill-btn"
+                        style={{borderColor:"#a7f3d0",color:"#065f46"}}
+                        title={`${m.name} ${m.dose||""}${m.unit||""}`}
+                        onClick={()=>add("meds",{...emptyMed(), name:m.name, dose:m.dose||"", unit:m.unit||"", route:m.route||""})}>
+                        {m.name.length>14 ? m.name.slice(0,14)+"…" : m.name}
+                        {m.dose ? ` ${m.dose}${m.unit||""}` : ""}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {!(daily.meds||[]).length && <div className="empty-hint">今日無用藥紀錄</div>}
+              {(daily.meds||[]).map((m,i)=>(
+                <div key={i} className="med-item">
+                  <div style={{display:"flex",gap:8,alignItems:"flex-start",marginBottom:8}}>
+                    <div style={{flex:1}}>
+                      <span className="med-label">藥物名稱</span>
+                      <input className="med-inp" value={m.name} onChange={e=>upItem("meds",i,"name",e.target.value)} placeholder="藥物名稱"/>
+                    </div>
+                    <button className="del-btn" style={{background:"#d1fae5",color:"#065f46",marginTop:18}} onClick={()=>rem("meds",i)}>✕</button>
+                  </div>
+                  <div style={{display:"flex",gap:8,marginBottom:8}}>
+                    <div style={{flex:1}}>
+                      <span className="med-label">劑量</span>
+                      <input className="med-inp" value={m.dose} onChange={e=>upItem("meds",i,"dose",e.target.value)} placeholder="例：0.5"/>
+                    </div>
+                    <div style={{width:80}}>
+                      <span className="med-label">單位</span>
+                      <select className="med-inp" value={m.unit} onChange={e=>upItem("meds",i,"unit",e.target.value)}>
+                        <option value="">單位</option>
+                        <option>ml</option>
+                        <option>mg</option>
+                        <option>顆</option>
+                        <option>錠</option>
+                        <option>滴</option>
+                        <option>包</option>
+                      </select>
+                    </div>
+                    <div style={{width:90}}>
+                      <span className="med-label">給藥方式</span>
+                      <select className="med-inp" value={m.route} onChange={e=>upItem("meds",i,"route",e.target.value)}>
+                        <option value="">方式</option>
+                        <option>口服</option>
+                        <option>混入食物</option>
+                        <option>皮下注射</option>
+                        <option>外用</option>
+                        <option>滴耳</option>
+                        <option>滴眼</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div style={{display:"flex",gap:8,alignItems:"flex-end",marginBottom:8}}>
+                    <div style={{width:110}}>
+                      <span className="med-label">給藥時間</span>
+                      <input type="time" className="med-inp" value={m.time} onChange={e=>upItem("meds",i,"time",e.target.value)}/>
+                    </div>
+                    <div style={{flex:1}}>
+                      <span className="med-label">狀態</span>
+                      <button className={`med-given-btn${m.given?" given":""}`}
+                        onClick={()=>upItem("meds",i,"given",!m.given)}>
+                        <span className="med-check">{m.given&&<span style={{fontSize:11,fontWeight:900}}>✓</span>}</span>
+                        {m.given ? "已給藥" : "未給藥"}
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <span className="med-label">備註</span>
+                    <input className="med-inp" value={m.note} onChange={e=>upItem("meds",i,"note",e.target.value)} placeholder="例：與食物同服、需觀察反應…"/>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Vet visits */}
+          <div className="card">
+            <div className="card-head" style={{cursor:"pointer"}} onClick={()=>toggleCard("vet")}>
+              <div className="card-title"><div className="card-icon" style={{background:"#dbeafe"}}>🏥</div>就醫紀錄</div>
+              <div className="card-head-right">
+                <button className="add-btn" style={{borderColor:"#3b82f6",color:"#3b82f6"}} onClick={(e)=>{e.stopPropagation();add("vetVisits",emptyVet());}}>＋ 新增</button>
+                <span className={`card-chevron${collapsed.vet?"":" open"}`}>▾</span>
+              </div>
+            </div>
+            <div className={`card-body${collapsed.vet?" card-body-collapsed":""}`}>
+              {!(daily.vetVisits||[]).length && <div className="empty-hint">今日無就醫紀錄</div>}
+              {(daily.vetVisits||[]).map((v,i)=>(
+                <div key={i} className="vet-item">
+                  <div className="vet-row">
+                    <div style={{flex:1}}>
+                      <span className="vet-label">診所 / 醫院</span>
+                      <input className="vet-inp" value={v.clinic} onChange={e=>upItem("vetVisits",i,"clinic",e.target.value)} placeholder="診所或醫院名稱"/>
+                    </div>
+                    <div style={{width:100}}>
+                      <span className="vet-label">主治獸醫</span>
+                      <input className="vet-inp" value={v.vet} onChange={e=>upItem("vetVisits",i,"vet",e.target.value)} placeholder="醫師姓名"/>
+                    </div>
+                    <button className="del-btn" style={{background:"#dbeafe",color:"#1d4ed8"}} onClick={()=>rem("vetVisits",i)}>✕</button>
+                  </div>
+                  <div className="vet-row">
+                    <div style={{flex:1}}>
+                      <span className="vet-label">就診原因</span>
+                      <input className="vet-inp" value={v.reason} onChange={e=>upItem("vetVisits",i,"reason",e.target.value)} placeholder="例：嘔吐、定期健檢…"/>
+                    </div>
+                    <div style={{width:90}}>
+                      <span className="vet-label">費用</span>
+                      <input className="vet-inp" value={v.cost} onChange={e=>upItem("vetVisits",i,"cost",e.target.value)} placeholder="NT$"/>
+                    </div>
+                  </div>
+                  <div style={{marginBottom:8}}>
+                    <span className="vet-label">診斷結果</span>
+                    <textarea className="vet-inp" value={v.diagnosis} onChange={e=>upItem("vetVisits",i,"diagnosis",e.target.value)} rows={2} placeholder="醫師診斷內容…"/>
+                  </div>
+                  <div style={{marginBottom:8}}>
+                    <span className="vet-label">治療處置</span>
+                    <textarea className="vet-inp" value={v.treatment} onChange={e=>upItem("vetVisits",i,"treatment",e.target.value)} rows={2} placeholder="例：打針、點滴、手術…"/>
+                  </div>
+                  <div className="vet-row" style={{marginBottom:8}}>
+                    <div style={{flex:1}}>
+                      <span className="vet-label">開立藥物</span>
+                      <input className="vet-inp" value={v.meds} onChange={e=>upItem("vetVisits",i,"meds",e.target.value)} placeholder="藥物名稱及劑量"/>
+                    </div>
+                    <div style={{flex:1}}>
+                      <span className="vet-label">複診日期</span>
+                      <input type="date" className="vet-inp" value={v.followUp} onChange={e=>upItem("vetVisits",i,"followUp",e.target.value)}/>
+                    </div>
+                  </div>
+                  <div>
+                    <span className="vet-label">備註</span>
+                    <textarea className="vet-inp" value={v.note} onChange={e=>upItem("vetVisits",i,"note",e.target.value)} rows={2} placeholder="其他注意事項…"/>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+            </div>
+          </div>
+
           {/* Activity log */}
           <div className="card">
             <div className="card-head" style={{cursor:"pointer"}} onClick={()=>toggleCard("activity")}>
@@ -4888,156 +5110,6 @@ function CatTab({ meta }) {
                   </div>
                 );
               })}
-            </div>
-          </div>
-
-          {/* Medications */}
-          <div className="card">
-            <div className="card-head" style={{cursor:"pointer"}} onClick={()=>toggleCard("meds")}>
-              <div className="card-title"><div className="card-icon" style={{background:"#d1fae5"}}>💊</div>吃藥紀錄</div>
-              <div className="card-head-right">
-                <button className="add-btn" style={{borderColor:"#10b981",color:"#10b981"}} onClick={(e)=>{e.stopPropagation();add("meds",emptyMed());}}>＋ 新增</button>
-                <span className={`card-chevron${collapsed.meds?"":" open"}`}>▾</span>
-              </div>
-            </div>
-            <div className={`card-body${collapsed.meds?" card-body-collapsed":""}`}>
-              {freqMeds.length>0 && (
-                <div style={{marginBottom:8}}>
-                  <div style={{fontSize:10,fontWeight:800,color:"var(--text3)",letterSpacing:".4px",textTransform:"uppercase",marginBottom:5}}>⚡ 常用</div>
-                  <div className="quick-fill-row">
-                    {freqMeds.map((m,i)=>(
-                      <button key={i} className="quick-fill-btn"
-                        style={{borderColor:"#a7f3d0",color:"#065f46"}}
-                        title={`${m.name} ${m.dose||""}${m.unit||""}`}
-                        onClick={()=>add("meds",{...emptyMed(), name:m.name, dose:m.dose||"", unit:m.unit||"", route:m.route||""})}>
-                        {m.name.length>14 ? m.name.slice(0,14)+"…" : m.name}
-                        {m.dose ? ` ${m.dose}${m.unit||""}` : ""}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {!(daily.meds||[]).length && <div className="empty-hint">今日無用藥紀錄</div>}
-              {(daily.meds||[]).map((m,i)=>(
-                <div key={i} className="med-item">
-                  <div style={{display:"flex",gap:8,alignItems:"flex-start",marginBottom:8}}>
-                    <div style={{flex:1}}>
-                      <span className="med-label">藥物名稱</span>
-                      <input className="med-inp" value={m.name} onChange={e=>upItem("meds",i,"name",e.target.value)} placeholder="藥物名稱"/>
-                    </div>
-                    <button className="del-btn" style={{background:"#d1fae5",color:"#065f46",marginTop:18}} onClick={()=>rem("meds",i)}>✕</button>
-                  </div>
-                  <div style={{display:"flex",gap:8,marginBottom:8}}>
-                    <div style={{flex:1}}>
-                      <span className="med-label">劑量</span>
-                      <input className="med-inp" value={m.dose} onChange={e=>upItem("meds",i,"dose",e.target.value)} placeholder="例：0.5"/>
-                    </div>
-                    <div style={{width:80}}>
-                      <span className="med-label">單位</span>
-                      <select className="med-inp" value={m.unit} onChange={e=>upItem("meds",i,"unit",e.target.value)}>
-                        <option value="">單位</option>
-                        <option>ml</option>
-                        <option>mg</option>
-                        <option>顆</option>
-                        <option>錠</option>
-                        <option>滴</option>
-                        <option>包</option>
-                      </select>
-                    </div>
-                    <div style={{width:90}}>
-                      <span className="med-label">給藥方式</span>
-                      <select className="med-inp" value={m.route} onChange={e=>upItem("meds",i,"route",e.target.value)}>
-                        <option value="">方式</option>
-                        <option>口服</option>
-                        <option>混入食物</option>
-                        <option>皮下注射</option>
-                        <option>外用</option>
-                        <option>滴耳</option>
-                        <option>滴眼</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div style={{display:"flex",gap:8,alignItems:"flex-end",marginBottom:8}}>
-                    <div style={{width:110}}>
-                      <span className="med-label">給藥時間</span>
-                      <input type="time" className="med-inp" value={m.time} onChange={e=>upItem("meds",i,"time",e.target.value)}/>
-                    </div>
-                    <div style={{flex:1}}>
-                      <span className="med-label">狀態</span>
-                      <button className={`med-given-btn${m.given?" given":""}`}
-                        onClick={()=>upItem("meds",i,"given",!m.given)}>
-                        <span className="med-check">{m.given&&<span style={{fontSize:11,fontWeight:900}}>✓</span>}</span>
-                        {m.given ? "已給藥" : "未給藥"}
-                      </button>
-                    </div>
-                  </div>
-                  <div>
-                    <span className="med-label">備註</span>
-                    <input className="med-inp" value={m.note} onChange={e=>upItem("meds",i,"note",e.target.value)} placeholder="例：與食物同服、需觀察反應…"/>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Vet visits */}
-          <div className="card">
-            <div className="card-head" style={{cursor:"pointer"}} onClick={()=>toggleCard("vet")}>
-              <div className="card-title"><div className="card-icon" style={{background:"#dbeafe"}}>🏥</div>就醫紀錄</div>
-              <div className="card-head-right">
-                <button className="add-btn" style={{borderColor:"#3b82f6",color:"#3b82f6"}} onClick={(e)=>{e.stopPropagation();add("vetVisits",emptyVet());}}>＋ 新增</button>
-                <span className={`card-chevron${collapsed.vet?"":" open"}`}>▾</span>
-              </div>
-            </div>
-            <div className={`card-body${collapsed.vet?" card-body-collapsed":""}`}>
-              {!(daily.vetVisits||[]).length && <div className="empty-hint">今日無就醫紀錄</div>}
-              {(daily.vetVisits||[]).map((v,i)=>(
-                <div key={i} className="vet-item">
-                  <div className="vet-row">
-                    <div style={{flex:1}}>
-                      <span className="vet-label">診所 / 醫院</span>
-                      <input className="vet-inp" value={v.clinic} onChange={e=>upItem("vetVisits",i,"clinic",e.target.value)} placeholder="診所或醫院名稱"/>
-                    </div>
-                    <div style={{width:100}}>
-                      <span className="vet-label">主治獸醫</span>
-                      <input className="vet-inp" value={v.vet} onChange={e=>upItem("vetVisits",i,"vet",e.target.value)} placeholder="醫師姓名"/>
-                    </div>
-                    <button className="del-btn" style={{background:"#dbeafe",color:"#1d4ed8"}} onClick={()=>rem("vetVisits",i)}>✕</button>
-                  </div>
-                  <div className="vet-row">
-                    <div style={{flex:1}}>
-                      <span className="vet-label">就診原因</span>
-                      <input className="vet-inp" value={v.reason} onChange={e=>upItem("vetVisits",i,"reason",e.target.value)} placeholder="例：嘔吐、定期健檢…"/>
-                    </div>
-                    <div style={{width:90}}>
-                      <span className="vet-label">費用</span>
-                      <input className="vet-inp" value={v.cost} onChange={e=>upItem("vetVisits",i,"cost",e.target.value)} placeholder="NT$"/>
-                    </div>
-                  </div>
-                  <div style={{marginBottom:8}}>
-                    <span className="vet-label">診斷結果</span>
-                    <textarea className="vet-inp" value={v.diagnosis} onChange={e=>upItem("vetVisits",i,"diagnosis",e.target.value)} rows={2} placeholder="醫師診斷內容…"/>
-                  </div>
-                  <div style={{marginBottom:8}}>
-                    <span className="vet-label">治療處置</span>
-                    <textarea className="vet-inp" value={v.treatment} onChange={e=>upItem("vetVisits",i,"treatment",e.target.value)} rows={2} placeholder="例：打針、點滴、手術…"/>
-                  </div>
-                  <div className="vet-row" style={{marginBottom:8}}>
-                    <div style={{flex:1}}>
-                      <span className="vet-label">開立藥物</span>
-                      <input className="vet-inp" value={v.meds} onChange={e=>upItem("vetVisits",i,"meds",e.target.value)} placeholder="藥物名稱及劑量"/>
-                    </div>
-                    <div style={{flex:1}}>
-                      <span className="vet-label">複診日期</span>
-                      <input type="date" className="vet-inp" value={v.followUp} onChange={e=>upItem("vetVisits",i,"followUp",e.target.value)}/>
-                    </div>
-                  </div>
-                  <div>
-                    <span className="vet-label">備註</span>
-                    <textarea className="vet-inp" value={v.note} onChange={e=>upItem("vetVisits",i,"note",e.target.value)} rows={2} placeholder="其他注意事項…"/>
-                  </div>
-                </div>
-              ))}
             </div>
           </div>
 
